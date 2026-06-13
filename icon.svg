@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4f46e5;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <dropShadow dx="0" dy="8" stdDeviation="16" flood-color="#6366f1" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="128" fill="#121214"/>
+  <!-- Glowing main emblem -->
+  <g filter="url(#glow)">
+    <rect x="106" y="106" width="300" height="300" rx="64" fill="url(#grad)"/>
+    <!-- Card Lines -->
+    <rect x="146" y="156" width="50" height="38" rx="8" fill="#ffd600"/>
+    <rect x="146" y="240" width="220" height="24" rx="6" fill="#ffffff" opacity="0.15"/>
+    <rect x="146" y="280" width="140" height="24" rx="6" fill="#ffffff" opacity="0.15"/>
+    <!-- Cashback percent emblem -->
+    <circle cx="316" cy="300" r="50" fill="#ffffff" opacity="0.2"/>
+    <text x="316" y="316" font-family="'Outfit', sans-serif" font-size="48" font-weight="bold" fill="#ffffff" text-anchor="middle">%</text>
+  </g>
+</svg>

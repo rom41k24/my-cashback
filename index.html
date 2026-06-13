@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Мой Кешбэк & Подписки</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#121214">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Основной контейнер приложения -->
+  <div class="app-container">
+    
+    <!-- Экран 1: Кэшбэк -->
+    <section id="cashback-screen" class="screen active">
+      <header class="screen-header header-with-action">
+        <div>
+          <h1 id="cashback-title">Кешбэк в июне</h1>
+          <p class="subtitle">Ваши карты и повышенные категории</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-icon" id="btn-open-settings" aria-label="Настройки" title="Синхронизация данных">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.2" fill="none">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
+          <button class="btn-icon" id="btn-add-card" aria-label="Добавить карту">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Контейнер для поисковой строки -->
+      <div class="search-container" style="display: flex; gap: 10px; align-items: center;">
+        <div class="search-wrapper" style="flex: 1;">
+          <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="search-input" placeholder="Код MCC (5411...) или место..." autocomplete="off">
+          <button id="btn-clear-search" class="btn-clear-search" aria-label="Очистить поиск" style="display: none;">
+            &times;
+          </button>
+        </div>
+        <button class="btn-icon" id="btn-mcc-guide" title="Справочник MCC кодов" aria-label="Справочник MCC кодов" style="flex-shrink: 0; width: 44px; height: 44px; border-radius: 14px; color: var(--text-secondary);">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="9" y1="3" x2="9" y2="21"></line>
+            <line x1="15" y1="3" x2="15" y2="21"></line>
+            <line x1="3" y1="9" x2="21" y2="9"></line>
+            <line x1="3" y1="15" x2="21" y2="15"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Контейнер для результатов поиска -->
+      <div class="search-results-list" id="search-results-container" style="display: none;">
+        <!-- Будет заполняться динамически через JS -->
+      </div>
+
+      <div class="cards-grid" id="cards-container">
+        <!-- Карты будут сгенерированы динамически через app.js -->
+      </div>
+    </section>
+
+    <!-- Экран 2: Подписки -->
+    <section id="subscriptions-screen" class="screen">
+      <header class="screen-header">
+        <h1>Подписки</h1>
+        <p class="subtitle">Контроль регулярных списаний</p>
+      </header>
+
+      <!-- Сводная карточка расходов -->
+      <div class="summary-card">
+        <div class="summary-info">
+          <span class="summary-label">Траты в месяц</span>
+          <span class="summary-value" id="total-spend">0 ₽</span>
+        </div>
+        <div class="summary-sub">
+          <span id="sub-count">0 подписок</span>
+        </div>
+      </div>
+
+      <!-- Фильтры и сортировка -->
+      <div class="list-actions">
+        <span class="section-title">Все подписки</span>
+        <select class="sort-select" id="btn-sort">
+          <option value="date-asc">По дате ↓</option>
+          <option value="date-desc">По дате ↑</option>
+          <option value="cost-desc">По стоимости ↓</option>
+          <option value="cost-asc">По стоимости ↑</option>
+        </select>
+      </div>
+
+      <!-- Список подписок -->
+      <div class="subscriptions-list" id="subs-container">
+        <!-- Подписки будут сгенерированы динамически через app.js -->
+      </div>
+
+      <!-- Кнопка добавить подписку (FAB) -->
+      <button class="fab" id="btn-add-sub" aria-label="Добавить подписку">
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5" fill="none">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+    </section>
+
+    <!-- Экран 3: Важные платежи -->
+    <section id="payments-screen" class="screen">
+      <header class="screen-header">
+        <h1>Важные платежи</h1>
+        <p class="subtitle">Контроль долгов, кредиток и вкладов</p>
+      </header>
+
+      <!-- Сводная карточка платежей -->
+      <div class="summary-card">
+        <div class="summary-info">
+          <span class="summary-label">Ближайшие события</span>
+          <span class="summary-value" id="payments-summary-value">0</span>
+        </div>
+        <div class="summary-sub">
+          <span id="payments-summary-sub">Нет важных событий в ближайшие 7 дней</span>
+        </div>
+      </div>
+
+      <div class="list-actions">
+        <span class="section-title">Список событий</span>
+      </div>
+
+      <!-- Список платежей -->
+      <div class="payments-list" id="payments-container">
+        <!-- События будут сгенерированы динамически через app.js -->
+      </div>
+
+      <!-- Кнопка добавить событие (FAB) -->
+      <button class="fab" id="btn-add-payment" aria-label="Добавить событие">
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5" fill="none">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+    </section>
+
+    <!-- Нижняя панель навигации -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-screen="cashback-screen">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none">
+          <rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="2" y1="10" x2="22" y2="10"></line>
+        </svg>
+        <span>Кешбэк</span>
+      </button>
+      <button class="nav-item" data-screen="subscriptions-screen">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+        </svg>
+        <span>Подписки</span>
+      </button>
+      <button class="nav-item" data-screen="payments-screen">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+          <circle cx="12" cy="15" r="1"></circle>
+          <line x1="12" y1="11" x2="12" y2="13"></line>
+        </svg>
+        <span>Платежи</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- Модальное окно: Просмотр и редактирование карты -->
+  <div class="modal" id="card-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-card-title">Название карты</h2>
+        <button class="btn-close" id="btn-close-card">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="modal-card-visual" class="bank-card-visual">
+          <div class="card-visual-top">
+            <div class="card-chip"></div>
+            <div class="card-bank-name" id="modal-card-bank-name">BANK</div>
+          </div>
+          <div class="card-visual-middle">
+            <div class="card-visual-number-row">
+              <span id="modal-card-number-display" class="card-number-font">•••• •••• •••• ••••</span>
+              <button class="btn-copy-visual" id="btn-copy-number" title="Копировать номер">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              </button>
+            </div>
+          </div>
+          <div class="card-visual-bottom">
+            <div class="card-visual-expiry-group">
+              <span class="card-visual-label">VALID THRU</span>
+              <div class="card-visual-value-row">
+                <span id="modal-card-expiry-display">MM/YY</span>
+                <button class="btn-copy-visual" id="btn-copy-expiry" title="Копировать срок">
+                  <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+              </div>
+            </div>
+            <div class="card-visual-cvv-group">
+              <span class="card-visual-label">CVV</span>
+              <div class="card-visual-value-row">
+                <span id="modal-card-cvv-display">•••</span>
+                <button class="btn-toggle-visual" id="btn-toggle-cvv" title="Показать/скрыть">
+                  <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+                <button class="btn-copy-visual" id="btn-copy-cvv" title="Копировать CVV">
+                  <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.5" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+              </div>
+            </div>
+            <div class="card-type" id="modal-card-type-name">Debit</div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 16px;">
+          <label for="edit-card-bank">Название банка (заглавными)</label>
+          <input type="text" id="edit-card-bank" placeholder="Например: Т-БАНК" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-card-name">Название карты</label>
+            <input type="text" id="edit-card-name" placeholder="Например: Тинькофф Black" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-card-type">Тип / Дизайн</label>
+            <input type="text" id="edit-card-type" placeholder="Например: Black" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" style="flex: 2;">
+            <label for="edit-card-number">Номер карты</label>
+            <input type="text" id="edit-card-number" placeholder="0000 0000 0000 0000" maxlength="19">
+          </div>
+          <div class="form-group">
+            <label for="edit-card-expiry">Срок</label>
+            <input type="text" id="edit-card-expiry" placeholder="ММ/ГГ" maxlength="5">
+          </div>
+          <div class="form-group">
+            <label for="edit-card-cvv">CVV</label>
+            <input type="text" id="edit-card-cvv" placeholder="000" maxlength="3">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-card-accumulated">Накопленный кэшбэк за этот месяц (₽)</label>
+          <input type="number" id="edit-card-accumulated" placeholder="0" min="0">
+        </div>
+
+        <div class="form-group">
+          <label for="edit-card-theme">Цветовая тема</label>
+          <select id="edit-card-theme">
+            <option value="mts">МТС (Красный)</option>
+            <option value="tinkoff">Тинькофф (Желто-черный)</option>
+            <option value="alfa">Альфа (Красный классик)</option>
+            <option value="yandex">Яндекс (Черно-желтый)</option>
+            <option value="sber">Зеленый (Сбер)</option>
+            <option value="vtb">Синий (ВТБ)</option>
+            <option value="purple">Фиолетовый</option>
+            <option value="gold">Золотой</option>
+            <option value="silver">Серебряный</option>
+            <option value="rosegold">Розовое золото</option>
+            <option value="emerald">Мятно-изумрудный</option>
+            <option value="cyan">Бирюзовый</option>
+            <option value="orange">Оранжевый</option>
+            <option value="crimson">Малиновый</option>
+            <option value="midnight">Глубокий синий</option>
+            <option value="carbon">Карбон (Темно-серый)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-card-network">Платежная система</label>
+          <select id="edit-card-network">
+            <option value="mir">МИР</option>
+            <option value="visa">Visa</option>
+            <option value="mastercard">Mastercard</option>
+            <option value="unionpay">UnionPay</option>
+            <option value="none">Без логотипа</option>
+          </select>
+        </div>
+        
+        <h3>Категории кэшбэка</h3>
+        <div class="categories-list-edit" id="modal-categories-list">
+          <!-- Редактируемые категории будут здесь -->
+        </div>
+        
+        <button class="btn btn-secondary" id="btn-add-category-row">+ Добавить категорию</button>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger btn-left" id="btn-delete-card" style="display: none;">Удалить карту</button>
+        <button class="btn btn-primary" id="btn-save-card">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно: Добавление / Редактирование подписки -->
+  <div class="modal" id="sub-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-sub-title">Новая подписка</h2>
+        <button class="btn-close" id="btn-close-sub">&times;</button>
+      </div>
+      <form id="sub-form" class="modal-body">
+        <input type="hidden" id="edit-sub-id">
+        
+        <div class="form-group">
+          <label for="sub-name">Название сервиса</label>
+          <input type="text" id="sub-name" placeholder="Например: Яндекс Плюс" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="sub-cost">Стоимость (₽)</label>
+            <input type="number" id="sub-cost" placeholder="299" required min="0">
+          </div>
+          <div class="form-group">
+            <label for="sub-period">Периодичность</label>
+            <select id="sub-period">
+              <option value="monthly">В месяц</option>
+              <option value="yearly">В год</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="sub-date">Дата следующего списания</label>
+          <input type="date" id="sub-date" required>
+        </div>
+
+        <div class="form-group">
+          <label for="sub-card">С какой карты оплата</label>
+          <select id="sub-card" required>
+            <!-- Карты загружаются динамически -->
+          </select>
+        </div>
+      </form>
+      <div class="modal-footer">
+        <button class="btn btn-danger btn-left" id="btn-delete-sub" style="display: none;">Удалить</button>
+        <button class="btn btn-primary" id="btn-save-sub">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно: Добавление / Редактирование важного платежа -->
+  <div class="modal" id="payment-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-payment-title">Новый платеж</h2>
+        <button class="btn-close" id="btn-close-payment">&times;</button>
+      </div>
+      <form id="payment-form" class="modal-body" onsubmit="return false;">
+        <input type="hidden" id="edit-payment-id">
+        
+        <div class="form-group">
+          <label for="payment-type">Тип события</label>
+          <select id="payment-type" required>
+            <option value="credit">Кредитная карта (платеж)</option>
+            <option value="debt">Долг (вернуть долг)</option>
+            <option value="savings">Накопительный счет / Вклад</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="payment-name">Название</label>
+          <input type="text" id="payment-name" placeholder="Например: Альфа Кредитка, Долг от Игоря" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="payment-amount">Сумма (₽)</label>
+            <input type="number" id="payment-amount" placeholder="0" required min="0">
+          </div>
+          <div class="form-group">
+            <label for="payment-date">Срок (дата)</label>
+            <input type="date" id="payment-date" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="payment-note">Примечание / Описание</label>
+          <input type="text" id="payment-note" placeholder="Например: Минимальный платеж, под 18% годовых">
+        </div>
+      </form>
+      <div class="modal-footer">
+        <button class="btn btn-danger btn-left" id="btn-delete-payment" style="display: none;">Удалить</button>
+        <button class="btn btn-primary" id="btn-save-payment">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно: Справочник MCC -->
+  <div class="modal" id="mcc-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" style="max-height: 80vh;">
+      <div class="modal-header">
+        <h2>Справочник MCC кодов</h2>
+        <button class="btn-close" id="btn-close-mcc">&times;</button>
+      </div>
+      <div class="modal-body" style="padding-top: 0;">
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
+          Merchant Category Code (MCC) — код вида торговой точки. Банки начисляют повышенный кэшбэк на основе этих кодов. Кликните по коду для поиска.
+        </p>
+        <div class="mcc-guide-list" id="mcc-guide-container">
+          <!-- Сюда сгенерируем группы MCC кодов -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно: Настройки (Импорт / Экспорт) -->
+  <div class="modal" id="settings-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Синхронизация данных</h2>
+        <button class="btn-close" id="btn-close-settings">&times;</button>
+      </div>
+      <div class="modal-body" style="padding-top: 10px;">
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5;">
+          Данные хранятся в памяти браузера. Экспортируйте файл с компьютера и импортируйте на телефоне (или наоборот), чтобы перенести все карты и подписки.
+        </p>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+          <button class="btn btn-primary" id="btn-export-data" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px;">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            Экспортировать в файл
+          </button>
+          
+          <button class="btn btn-secondary" id="btn-import-trigger" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary);">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Импортировать из файла
+          </button>
+          <input type="file" id="import-file-input" accept=".json" style="display: none;">
+        </div>
+        
+        <div id="settings-status-msg" style="font-size: 13px; text-align: center; display: none; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); margin-top: 10px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

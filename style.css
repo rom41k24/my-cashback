@@ -1,0 +1,1627 @@
+/* Сброс базовых стилей и шрифты */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --bg-primary: #121214;
+  --bg-secondary: rgba(255, 255, 255, 0.04);
+  --bg-tertiary: rgba(255, 255, 255, 0.08);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0ab;
+  --accent-color: #6366f1;
+  --accent-glow: rgba(99, 102, 241, 0.15);
+  
+  /* Фирменные цвета банков */
+  --color-mts: linear-gradient(135deg, #ff001c 0%, #b30010 100%);
+  --color-tinkoff: linear-gradient(135deg, #ffdd2d 0%, #c4a100 100%);
+  --color-alfa: linear-gradient(135deg, #ef3124 0%, #a5120a 100%);
+  --color-yandex: linear-gradient(135deg, #212121 0%, #000000 100%);
+  --border-yandex: #f0ca00;
+  --color-sber: linear-gradient(135deg, #07a844 0%, #036525 100%);
+  --color-vtb: linear-gradient(135deg, #002c77 0%, #0077ff 100%);
+  --color-purple: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%);
+  --color-gold: linear-gradient(135deg, #d97706 0%, #78350f 100%);
+  --color-silver: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+  --color-rosegold: linear-gradient(135deg, #fbcfe8 0%, #db2777 100%);
+  --color-emerald: linear-gradient(135deg, #a7f3d0 0%, #065f46 100%);
+  --color-cyan: linear-gradient(135deg, #a5f3fc 0%, #0369a1 100%);
+  --color-orange: linear-gradient(135deg, #ffedd5 0%, #c2410c 100%);
+  --color-crimson: linear-gradient(135deg, #fce7f3 0%, #be185d 100%);
+  --color-midnight: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+  --color-carbon: linear-gradient(135deg, #4b5563 0%, #111827 100%);
+  
+  --font-title: 'Outfit', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.12), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(239, 49, 36, 0.08), transparent 40%);
+}
+
+/* Контейнер приложения */
+.app-container {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding-bottom: 90px; /* Отступ для нижней панели навигации */
+  background: rgba(18, 18, 20, 0.8);
+  backdrop-filter: blur(20px);
+  border-left: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+}
+
+/* Стили заголовков */
+.screen-header {
+  padding: 32px 24px 16px 24px;
+}
+
+.screen-header h1 {
+  font-family: var(--font-title);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+  background: linear-gradient(120deg, #fff 40%, #a0a0ab);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.screen-header .subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.header-with-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-icon {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.btn-icon:active {
+  transform: scale(0.92);
+}
+
+/* Стили экранов */
+.screen {
+  display: none;
+  flex-direction: column;
+  width: 100%;
+  animation: fadeIn 0.3s ease;
+}
+
+.screen.active {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Нижняя навигация */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  height: 76px;
+  background: rgba(18, 18, 20, 0.85);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 100;
+  padding-bottom: 12px;
+}
+
+.nav-item {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  flex: 1;
+  height: 100%;
+  justify-content: center;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.nav-item.active {
+  color: var(--accent-color);
+}
+
+.nav-item:active {
+  transform: scale(0.95);
+}
+
+.nav-icon {
+  width: 22px;
+  height: 22px;
+  transition: transform 0.2s ease;
+}
+
+.nav-item.active .nav-icon {
+  transform: translateY(-2px);
+  stroke-width: 2.5;
+}
+
+.nav-item span {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Сетка карточек кэшбэка */
+.cards-grid {
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Банковская карта */
+.bank-card {
+  border-radius: 20px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.bank-card:active {
+  transform: scale(0.98);
+}
+
+/* Брендовые градиенты и границы */
+.bank-card.mts, .bank-card-visual.mts { background: var(--color-mts); }
+.bank-card.tinkoff, .bank-card-visual.tinkoff { background: var(--color-tinkoff); color: #000000; }
+.bank-card.alfa, .bank-card-visual.alfa { background: var(--color-alfa); }
+.bank-card.yandex, .bank-card-visual.yandex { 
+  background: var(--color-yandex);
+  border: 1.5px solid var(--border-yandex);
+}
+.bank-card.sber, .bank-card-visual.sber { background: var(--color-sber); }
+.bank-card.vtb, .bank-card-visual.vtb { background: var(--color-vtb); }
+.bank-card.purple, .bank-card-visual.purple { background: var(--color-purple); }
+.bank-card.gold, .bank-card-visual.gold { background: var(--color-gold); }
+.bank-card.silver, .bank-card-visual.silver { background: var(--color-silver); color: #000000; }
+.bank-card.rosegold, .bank-card-visual.rosegold { background: var(--color-rosegold); }
+.bank-card.emerald, .bank-card-visual.emerald { background: var(--color-emerald); }
+.bank-card.cyan, .bank-card-visual.cyan { background: var(--color-cyan); }
+.bank-card.orange, .bank-card-visual.orange { background: var(--color-orange); }
+.bank-card.crimson, .bank-card-visual.crimson { background: var(--color-crimson); }
+.bank-card.midnight, .bank-card-visual.midnight { background: var(--color-midnight); }
+.bank-card.carbon, .bank-card-visual.carbon { background: var(--color-carbon); }
+
+/* Блик на карте */
+.bank-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.03) 50%,
+    rgba(255,255,255,0) 100%
+  );
+  transform: rotate(30deg);
+  pointer-events: none;
+}
+
+/* Внутренности карты */
+.card-header-visual {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.bank-name {
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.card-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.7;
+  font-weight: 700;
+}
+
+/* Список категорий на карте */
+.categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.category-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.1);
+}
+
+.bank-card.tinkoff .category-item {
+  border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+.category-name {
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.category-percent {
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* Сводная карточка подписок */
+.summary-card {
+  margin: 10px 24px 24px 24px;
+  padding: 24px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--bg-tertiary), rgba(255,255,255,0.02));
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.summary-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-value {
+  font-family: var(--font-title);
+  font-size: 32px;
+  font-weight: 700;
+  display: block;
+  margin-top: 4px;
+  background: linear-gradient(120deg, #fff 50%, var(--accent-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.summary-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Сортировки и Разделы */
+.list-actions {
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--accent-color);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+select.sort-select {
+  background: none;
+  border: none;
+  color: var(--accent-color);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-body);
+  outline: none;
+  text-align: right;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding: 0;
+  padding-right: 4px;
+  width: auto;
+  transition: none;
+}
+select.sort-select::-ms-expand {
+  display: none;
+}
+select.sort-select option {
+  background-color: #18181c;
+  color: #ffffff;
+}
+
+
+/* Список подписок */
+.subscriptions-list {
+  padding: 0 24px 80px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sub-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.sub-card:active {
+  transform: scale(0.98);
+}
+
+/* Предупреждение о скором платеже (до 3 дней) */
+.sub-card.warning {
+  border-color: rgba(239, 49, 36, 0.4);
+  background: rgba(239, 49, 36, 0.04);
+}
+
+.sub-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sub-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.sub-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.sub-card.warning .sub-info .date-pill {
+  color: #ff4a4a;
+  font-weight: 700;
+}
+
+.card-pill {
+  background: rgba(255,255,255,0.06);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+/* Пилл для карт со своими брендовыми цветами в пиллах */
+.card-pill.mts-pill { color: #ff334b; background: rgba(255, 0, 28, 0.1); }
+.card-pill.tinkoff-pill { color: #f0ca00; background: rgba(255, 221, 45, 0.1); }
+.card-pill.alfa-pill { color: #ff4a4a; background: rgba(239, 49, 36, 0.1); }
+.card-pill.yandex-pill { color: #ffd600; background: rgba(255, 255, 255, 0.1); }
+.card-pill.sber-pill { color: #07a844; background: rgba(7, 168, 68, 0.1); }
+.card-pill.vtb-pill { color: #0077ff; background: rgba(0, 119, 255, 0.1); }
+.card-pill.purple-pill { color: #a78bfa; background: rgba(124, 58, 237, 0.1); }
+.card-pill.gold-pill { color: #fbbf24; background: rgba(217, 119, 6, 0.1); }
+.card-pill.silver-pill { color: #94a3b8; background: rgba(148, 163, 184, 0.1); }
+.card-pill.rosegold-pill { color: #db2777; background: rgba(219, 39, 119, 0.1); }
+.card-pill.emerald-pill { color: #34d399; background: rgba(52, 211, 153, 0.1); }
+.card-pill.cyan-pill { color: #06b6d4; background: rgba(6, 182, 212, 0.1); }
+.card-pill.orange-pill { color: #f97316; background: rgba(249, 115, 22, 0.1); }
+.card-pill.crimson-pill { color: #be185d; background: rgba(190, 24, 93, 0.1); }
+.card-pill.midnight-pill { color: #60a5fa; background: rgba(30, 58, 138, 0.1); }
+.card-pill.carbon-pill { color: #9ca3af; background: rgba(75, 85, 99, 0.1); }
+
+.sub-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.sub-price {
+  font-family: var(--font-title);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.sub-period-text {
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+/* FAB (Floating Action Button) */
+.fab {
+  position: fixed;
+  bottom: 96px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  background: var(--accent-color);
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+  cursor: pointer;
+  z-index: 90;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.fab:active {
+  transform: scale(0.92);
+}
+
+@media (min-width: 480px) {
+  .fab {
+    right: calc(50% - 216px);
+  }
+}
+
+/* Модальные окна */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end; /* Мобильный стиль — выдвигается снизу */
+  justify-content: center;
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0.3s, opacity 0.3s;
+}
+
+.modal.active {
+  visibility: visible;
+  opacity: 1;
+}
+
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+}
+
+.modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  background: #18181c;
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  border-top: 1px solid var(--border-color);
+  padding: 24px;
+  max-height: 85vh;
+  overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.1, 0.76, 0.55, 0.94);
+  z-index: 1001;
+  box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+}
+
+.modal.active .modal-content {
+  transform: translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  font-family: var(--font-title);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.btn-close {
+  background: var(--bg-tertiary);
+  border: none;
+  color: var(--text-primary);
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Формы и поля ввода */
+.form-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+input, select {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 15px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+select option {
+  background-color: #18181c;
+  color: #ffffff;
+}
+
+input:focus, select:focus {
+  border-color: var(--accent-color);
+  background-color: var(--bg-tertiary);
+}
+
+/* Кнопки */
+.btn {
+  padding: 14px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, transform 0.2s;
+  font-family: var(--font-body);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--accent-color);
+  color: #fff;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-danger {
+  background: #ef3124;
+  color: #fff;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn-left {
+  margin-right: auto;
+}
+
+/* Специфика редактирования категорий карт */
+.categories-list-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.category-edit-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.category-edit-row input[type="text"] {
+  flex: 2;
+}
+
+.category-edit-row input[type="number"] {
+  flex: 1;
+}
+
+.btn-delete-row {
+  background: none;
+  border: none;
+  color: #ef3124;
+  font-size: 20px;
+  padding: 0 8px;
+  cursor: pointer;
+}
+
+/* Визуал карты в модалке */
+.bank-card-visual {
+  border-radius: 16px;
+  padding: 20px;
+  height: 120px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #fff;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.card-chip {
+  width: 32px;
+  height: 24px;
+  background: linear-gradient(135deg, #e0e0e0 0%, #a8a8a8 50%, #7c7c7c 100%);
+  border-radius: 4px;
+  position: relative;
+  box-shadow: inset 1px 1px 1px rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.card-bank-name {
+  font-family: var(--font-title);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.card-type {
+  font-size: 10px;
+  text-transform: uppercase;
+  opacity: 0.7;
+  letter-spacing: 0.5px;
+}
+
+/* Перетаскивание и порядок карт */
+.bank-card.dragging {
+  opacity: 0.4;
+  border: 2px dashed var(--accent-color);
+}
+
+.card-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-move-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: inherit;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+  padding-bottom: 2px;
+}
+
+.bank-card.tinkoff .card-move-btn, 
+.bank-card.silver .card-move-btn {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.05);
+}
+
+.card-move-btn:active {
+  transform: scale(0.88);
+}
+
+/* Детализация карты в модалке */
+.card-visual-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.card-visual-middle {
+  margin-top: 12px;
+  width: 100%;
+}
+
+.card-visual-number-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-number-font {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.card-visual-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.card-visual-expiry-group, .card-visual-cvv-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.card-visual-label {
+  font-size: 8px;
+  text-transform: uppercase;
+  opacity: 0.6;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.card-visual-value-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.btn-copy-visual, .btn-toggle-visual {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.btn-copy-visual:hover, .btn-toggle-visual:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.bank-card.tinkoff .btn-copy-visual:hover, 
+.bank-card.tinkoff .btn-toggle-visual:hover,
+.bank-card.silver .btn-copy-visual:hover,
+.bank-card.silver .btn-toggle-visual:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.btn-copy-visual:active, .btn-toggle-visual:active {
+  transform: scale(0.9);
+}
+
+/* Бедж накопленного кэшбэка */
+.card-cashback-badge {
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  margin-right: 4px;
+}
+
+.bank-card.tinkoff .card-cashback-badge, 
+.bank-card.silver .card-cashback-badge {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.05);
+  color: #000;
+}
+
+/* Реквизиты на главной карте */
+.card-credentials-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 8px 12px;
+  border-radius: 12px;
+  margin-top: 10px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.bank-card.tinkoff .card-credentials-bar, 
+.bank-card.silver .card-credentials-bar {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.05);
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.card-cred-number {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.card-cred-number:hover {
+  opacity: 0.8;
+}
+
+.card-cred-number:active {
+  transform: scale(0.98);
+}
+
+.card-cred-details {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-cred-expiry, .card-cred-cvv {
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 12px;
+  transition: opacity 0.2s, transform 0.1s;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.card-cred-expiry:hover, .card-cred-cvv:hover {
+  opacity: 0.8;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.bank-card.tinkoff .card-cred-expiry:hover, 
+.bank-card.tinkoff .card-cred-cvv:hover,
+.bank-card.silver .card-cred-expiry:hover,
+.bank-card.silver .card-cred-cvv:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.card-cred-expiry:active, .card-cred-cvv:active {
+  transform: scale(0.95);
+}
+
+.card-cred-toggle {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.card-cred-toggle:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.bank-card.tinkoff .card-cred-toggle:hover,
+.bank-card.silver .card-cred-toggle:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.card-cred-toggle:active {
+  transform: scale(0.9);
+}
+
+.copy-small-icon {
+  opacity: 0.6;
+}
+
+/* Логотипы платежных систем */
+.card-network-container {
+  position: absolute;
+  bottom: 12px;
+  right: 16px;
+  opacity: 0.75;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bank-card.tinkoff .card-network-container,
+.bank-card.silver .card-network-container {
+  color: #000;
+}
+
+/* Увеличение паддинга для карт с логотипом платежной системы, чтобы избежать наложений */
+.bank-card.has-network-logo {
+  padding-bottom: 38px;
+}
+
+/* Позиционирование логотипа внутри превью в модалке */
+.card-visual-bottom {
+  position: relative;
+}
+
+.card-visual-network {
+  position: absolute;
+  bottom: 0;
+  right: 68px; /* Смещаем левее типа карты (Debit/Black) */
+  opacity: 0.85;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bank-card-visual.tinkoff .card-visual-network,
+.bank-card-visual.silver .card-visual-network {
+  color: #000;
+}
+
+/* ==========================================================================
+   СТИЛИ ДЛЯ СИСТЕМЫ ПОИСКА КЕШБЭКА
+   ========================================================================== */
+
+/* Контейнер поисковой строки */
+.search-container {
+  padding: 0 24px 16px 24px;
+}
+
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 2px 14px;
+  transition: border-color 0.25s, box-shadow 0.25s, background-color 0.25s;
+}
+
+.search-wrapper:focus-within {
+  border-color: var(--accent-color);
+  background-color: var(--bg-tertiary);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.search-icon {
+  color: var(--text-secondary);
+  margin-right: 10px;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.search-wrapper:focus-within .search-icon {
+  color: var(--accent-color);
+}
+
+#search-input {
+  background: transparent;
+  border: none;
+  padding: 10px 0;
+  font-size: 14px;
+  color: #fff;
+  outline: none;
+  width: 100%;
+}
+
+#search-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
+.btn-clear-search {
+  background: var(--bg-tertiary);
+  border: none;
+  color: var(--text-secondary);
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: 8px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-clear-search:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+/* Результаты поиска */
+.search-results-list {
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: fadeIn 0.25s ease;
+  margin-bottom: 24px;
+}
+
+.search-results-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.search-result-item {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-result-item:active {
+  transform: scale(0.99);
+}
+
+/* Выделение лучшего выбора */
+.search-result-item.best-choice {
+  border-color: rgba(99, 102, 241, 0.35);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.04), rgba(255,255,255,0.01));
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.08);
+}
+
+.search-result-item.best-choice::before {
+  content: 'ЛУЧШИЙ ВЫБОР';
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: var(--accent-color);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  padding: 3px 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.search-result-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-result-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Мини-иконка/цвет банка для результата */
+.bank-badge-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.bank-badge-dot.mts { background: #ff001c; }
+.bank-badge-dot.tinkoff { background: #ffdd2d; }
+.bank-badge-dot.alfa { background: #ef3124; }
+.bank-badge-dot.yandex { background: #ffd600; }
+.bank-badge-dot.sber { background: #07a844; }
+.bank-badge-dot.vtb { background: #0077ff; }
+.bank-badge-dot.purple { background: #7c3aed; }
+.bank-badge-dot.gold { background: #d97706; }
+.bank-badge-dot.silver { background: #cbd5e1; }
+.bank-badge-dot.rosegold { background: #db2777; }
+.bank-badge-dot.emerald { background: #34d399; }
+.bank-badge-dot.cyan { background: #06b6d4; }
+.bank-badge-dot.orange { background: #f97316; }
+.bank-badge-dot.crimson { background: #be185d; }
+.bank-badge-dot.midnight { background: #1e3a8a; }
+.bank-badge-dot.carbon { background: #4b5563; }
+
+.search-result-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.search-result-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.search-result-category {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.search-result-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-result-percent {
+  font-family: var(--font-title);
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(120deg, #fff, var(--text-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.search-result-item.best-choice .search-result-percent {
+  background: linear-gradient(120deg, #fff, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Копирование реквизитов внутри результатов */
+.search-result-credentials {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.search-result-number {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.search-result-number:hover {
+  color: #fff;
+}
+
+.search-result-details {
+  display: flex;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.search-result-cvv {
+  cursor: pointer;
+}
+
+.search-result-cvv:hover {
+  color: #fff;
+}
+
+.no-results-card {
+  padding: 32px 16px;
+  text-align: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  color: var(--text-secondary);
+}
+
+.no-results-card svg {
+  margin-bottom: 12px;
+  opacity: 0.5;
+  color: var(--text-secondary);
+}
+
+.no-results-card p {
+  font-size: 14px;
+}
+
+/* ==========================================================================
+   СТИЛИ ДЛЯ СПРАВОЧНИКА MCC КОДОВ
+   ========================================================================== */
+
+/* Карточка информации о MCC в поисковой выдаче */
+.mcc-info-card {
+  padding: 16px;
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 16px;
+  margin-bottom: 8px;
+  animation: fadeIn 0.2s ease;
+  backdrop-filter: blur(5px);
+}
+
+.mcc-info-card-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #a78bfa;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.mcc-info-card-title {
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.mcc-info-card-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.mcc-info-card-category {
+  font-size: 12px;
+  margin-top: 10px;
+  font-weight: 600;
+  color: #34d399;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(52, 211, 153, 0.08);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* Справочник MCC кодов в модальном окне */
+.mcc-guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mcc-guide-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mcc-guide-group-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 6px;
+}
+
+.mcc-guide-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mcc-guide-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.mcc-guide-item:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  background-color: var(--bg-tertiary);
+}
+
+.mcc-guide-item-code {
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 700;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 3px 6px;
+  border-radius: 6px;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.02);
+}
+
+.mcc-guide-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: 12px;
+  flex: 1;
+}
+
+.mcc-guide-item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mcc-guide-item-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.mcc-guide-item-category {
+  font-size: 11px;
+  font-weight: 600;
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.08);
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   СТИЛИ ДЛЯ ЭКРАНА ВАЖНЫХ ПЛАТЕЖЕЙ
+   ========================================================================== */
+
+.payments-list {
+  padding: 0 24px 80px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.payment-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.payment-card:active {
+  transform: scale(0.98);
+}
+
+.payment-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.payment-card.type-credit::before {
+  background: #ef3124;
+}
+
+.payment-card.type-debt::before {
+  background: #7c3aed;
+}
+
+.payment-card.type-savings::before {
+  background: #07a844;
+}
+
+/* Выделение просроченных */
+.payment-card.overdue {
+  border-color: rgba(239, 49, 36, 0.4);
+  background: rgba(239, 49, 36, 0.04);
+}
+
+.payment-card.overdue::before {
+  background: #ff4a4a;
+}
+
+.payment-card-content {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.payment-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14px;
+  flex-shrink: 0;
+}
+
+.type-credit .payment-icon-wrapper {
+  background: rgba(239, 49, 36, 0.1);
+  color: #ef3124;
+}
+
+.type-debt .payment-icon-wrapper {
+  background: rgba(124, 58, 237, 0.1);
+  color: #a78bfa;
+}
+
+.type-savings .payment-icon-wrapper {
+  background: rgba(7, 168, 68, 0.1);
+  color: #34d399;
+}
+
+.payment-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.payment-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.payment-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.payment-date-pill {
+  font-weight: 600;
+}
+
+.payment-card.overdue .payment-date-pill {
+  color: #ff4a4a;
+  font-weight: 700;
+}
+
+.payment-note-pill {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.payment-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  margin-left: 12px;
+}
+
+.payment-price {
+  font-family: var(--font-title);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.payment-status-text {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.payment-card.overdue .payment-status-text {
+  color: #ff4a4a;
+}
