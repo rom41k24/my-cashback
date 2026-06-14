@@ -430,7 +430,7 @@
     </div>
   </div>
 
-  <!-- Модальное окно: Настройки (Импорт / Экспорт) -->
+  <!-- Модальное окно: Настройки (Синхронизация) -->
   <div class="modal" id="settings-modal">
     <div class="modal-backdrop"></div>
     <div class="modal-content">
@@ -438,25 +438,48 @@
         <h2>Синхронизация данных</h2>
         <button class="btn-close" id="btn-close-settings">&times;</button>
       </div>
-      <div class="modal-body" style="padding-top: 10px;">
-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5;">
-          Данные хранятся в памяти браузера. Экспортируйте файл с компьютера и импортируйте на телефоне (или наоборот), чтобы перенести все карты и подписки.
-        </p>
+      <div class="modal-body" style="padding-top: 10px; max-height: 70dvh; overflow-y: auto;">
         
-        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-          <button class="btn btn-primary" id="btn-export-data" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px;">
-            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-            Экспортировать в файл
-          </button>
-          
-          <button class="btn btn-secondary" id="btn-import-trigger" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary);">
-            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            Импортировать из файла
-          </button>
-          <input type="file" id="import-file-input" accept=".json" style="display: none;">
+        <!-- Секция 1: Облачная синхронизация -->
+        <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 20px;">
+          <h3 style="font-size: 15px; margin-bottom: 8px; color: var(--text-primary);">Облачная авто-синхронизация</h3>
+          <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.4;">
+            Введите секретный ключ (любое слово или пароль), чтобы автоматически сохранять и обновлять ваши карты на компьютере и телефоне.
+          </p>
+          <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+            <input type="text" id="sync-key-input" placeholder="Введите секретный ключ..." style="flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 13px; outline: none;">
+            <button class="btn btn-primary" id="btn-save-sync-key" style="padding: 0 16px; border-radius: 10px; font-size: 13px;">Войти</button>
+          </div>
+          <div style="display: flex; gap: 8px; display: none;" id="sync-active-actions">
+            <button class="btn btn-secondary" id="btn-sync-now" style="flex: 1; justify-content: center; font-size: 12px; height: 38px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              Обновить
+            </button>
+            <button class="btn btn-danger" id="btn-disconnect-sync" style="justify-content: center; font-size: 12px; height: 38px; padding: 0 12px;">Выйти</button>
+          </div>
+        </div>
+
+        <!-- Секция 2: Резервная копия через файл -->
+        <div>
+          <h3 style="font-size: 15px; margin-bottom: 8px; color: var(--text-primary);">Резервная копия (файлом)</h3>
+          <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.4;">
+            Вы можете вручную переносить данные через файл, если не хотите использовать интернет-синхронизацию.
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button class="btn btn-primary" id="btn-export-data" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px; font-size: 13px; height: 42px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              Экспортировать в файл
+            </button>
+            
+            <button class="btn btn-secondary" id="btn-import-trigger" style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px; border: 1px solid var(--border-color); background: transparent; color: var(--text-primary); font-size: 13px; height: 42px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Импортировать из файла
+            </button>
+            <input type="file" id="import-file-input" accept=".json" style="display: none;">
+          </div>
         </div>
         
-        <div id="settings-status-msg" style="font-size: 13px; text-align: center; display: none; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); margin-top: 10px;"></div>
+        <div id="settings-status-msg" style="font-size: 13px; text-align: center; display: none; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); margin-top: 16px; line-height: 1.4;"></div>
       </div>
     </div>
   </div>

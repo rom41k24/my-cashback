@@ -1831,6 +1831,198 @@ function closeModal(modalId) {
 }
 
 // -------------------------------------------------------------
+// ОБЛАЧНАЯ СИНХРОНИЗАЦИЯ ДАННЫХ
+// -------------------------------------------------------------
+let isSyncing = false;
+
+async function pushDataToCloud() {
+  if (isSyncing) return;
+  const key = localStorage.getItem("sync_key");
+  if (!key) return;
+
+  const data = {
+    cashback_cards: JSON.parse(localStorage.getItem("cashback_cards") || "[]"),
+    cashback_subs: JSON.parse(localStorage.getItem("cashback_subs") || "[]"),
+    cashback_payments: JSON.parse(localStorage.getItem("cashback_payments") || "[]"),
+    cashback_user_synonyms: JSON.parse(localStorage.getItem("cashback_user_synonyms") || "{}")
+  };
+
+  try {
+    const response = await fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, data })
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Ошибка сохранения');
+    }
+    console.log('Данные успешно сохранены в облаке Vercel KV!');
+  } catch (error) {
+    console.error('Ошибка авто-сохранения в облако:', error);
+  }
+}
+
+async function pullDataFromCloud(key) {
+  if (!key) return false;
+  
+  try {
+    const res = await fetch(`/api/sync?key=${encodeURIComponent(key)}`);
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Ошибка загрузки');
+    }
+    const result = await res.json();
+    
+    if (result.found && result.data) {
+      const data = result.data;
+      
+      isSyncing = true; // Отключаем перехват во время загрузки
+      
+      if (data.cashback_cards) {
+        localStorage.setItem("cashback_cards", JSON.stringify(data.cashback_cards));
+        state.cards = data.cashback_cards;
+      }
+      if (data.cashback_subs) {
+        localStorage.setItem("cashback_subs", JSON.stringify(data.cashback_subs));
+        state.subscriptions = data.cashback_subs;
+      }
+      if (data.cashback_payments) {
+        localStorage.setItem("cashback_payments", JSON.stringify(data.cashback_payments));
+        state.payments = data.cashback_payments;
+      }
+      if (data.cashback_user_synonyms) {
+        localStorage.setItem("cashback_user_synonyms", JSON.stringify(data.cashback_user_synonyms));
+        state.userSynonyms = data.cashback_user_synonyms;
+      }
+      
+      isSyncing = false;
+      
+      // Обновляем UI
+      renderCards();
+      renderSubscriptions();
+      renderPayments();
+      updateMonthTitle();
+      
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Ошибка загрузки данных из облака:', error);
+    throw error;
+  }
+}
+
+// Перехват записи в localStorage для авто-синхронизации
+const originalSetItem = localStorage.setItem;
+localStorage.setItem = function(key, value) {
+  originalSetItem.apply(this, arguments);
+  if (["cashback_cards", "cashback_subs", "cashback_payments", "cashback_user_synonyms"].includes(key)) {
+    pushDataToCloud();
+  }
+};
+
+function initSyncUI() {
+  const syncKeyInput = document.getElementById("sync-key-input");
+  const saveSyncKeyBtn = document.getElementById("btn-save-sync-key");
+  const syncActiveActions = document.getElementById("sync-active-actions");
+  const syncNowBtn = document.getElementById("btn-sync-now");
+  const disconnectSyncBtn = document.getElementById("btn-disconnect-sync");
+  const statusMsg = document.getElementById("settings-status-msg");
+
+  const storedKey = localStorage.getItem("sync_key");
+
+  function showStatus(text, isError = false) {
+    if (!statusMsg) return;
+    statusMsg.style.display = "block";
+    statusMsg.style.color = isError ? "#f44336" : "#4caf50";
+    statusMsg.innerText = text;
+  }
+
+  if (storedKey) {
+    if (syncKeyInput) {
+      syncKeyInput.value = storedKey;
+      syncKeyInput.disabled = true;
+    }
+    if (saveSyncKeyBtn) saveSyncKeyBtn.style.display = "none";
+    if (syncActiveActions) syncActiveActions.style.display = "flex";
+  } else {
+    if (syncKeyInput) {
+      syncKeyInput.value = "";
+      syncKeyInput.disabled = false;
+    }
+    if (saveSyncKeyBtn) saveSyncKeyBtn.style.display = "block";
+    if (syncActiveActions) syncActiveActions.style.display = "none";
+  }
+
+  if (saveSyncKeyBtn && syncKeyInput) {
+    saveSyncKeyBtn.onclick = async () => {
+      const key = syncKeyInput.value.trim();
+      if (!key) {
+        showStatus("Введите ключ!", true);
+        return;
+      }
+
+      saveSyncKeyBtn.disabled = true;
+      showStatus("Подключение к облаку...");
+
+      try {
+        const hasData = await pullDataFromCloud(key);
+        localStorage.setItem("sync_key", key); // Сохраняем только при успехе
+        
+        if (hasData) {
+          showStatus("Успешно подключено! Загружены данные из облака.");
+        } else {
+          showStatus("Создан новый ключ! Выгрузка локальных данных...");
+          await pushDataToCloud();
+          showStatus("Успешно подключено! Локальные данные сохранены в облако.");
+        }
+
+        setTimeout(() => {
+          location.reload();
+        }, 1500);
+
+      } catch (err) {
+        localStorage.removeItem("sync_key");
+        saveSyncKeyBtn.disabled = false;
+        showStatus("Ошибка подключения! Проверьте Storage в Vercel.", true);
+      }
+    };
+  }
+
+  if (disconnectSyncBtn) {
+    disconnectSyncBtn.onclick = () => {
+      localStorage.removeItem("sync_key");
+      showStatus("Синхронизация отключена! Перезагрузка...");
+      setTimeout(() => {
+        location.reload();
+      }, 1200);
+    };
+  }
+
+  if (syncNowBtn) {
+    syncNowBtn.onclick = async () => {
+      const key = localStorage.getItem("sync_key");
+      if (!key) return;
+
+      syncNowBtn.disabled = true;
+      showStatus("Синхронизация...");
+      try {
+        await pullDataFromCloud(key);
+        showStatus("Успешно синхронизировано!");
+        setTimeout(() => {
+          statusMsg.style.display = "none";
+          syncNowBtn.disabled = false;
+        }, 2000);
+      } catch (err) {
+        showStatus("Ошибка загрузки данных!", true);
+        syncNowBtn.disabled = false;
+      }
+    };
+  }
+}
+
+// -------------------------------------------------------------
 // События
 // -------------------------------------------------------------
 function setupEventListeners() {
@@ -2003,11 +2195,20 @@ function setupEventListeners() {
       reader.readAsText(file);
     };
   }
+
+  // Инициализация интерфейса синхронизации
+  initSyncUI();
 }
 
 // Инициализация при загрузке страницы
 window.onload = () => {
   initApp();
+  
+  // Автозагрузка данных из облака при наличии ключа
+  const storedKey = localStorage.getItem("sync_key");
+  if (storedKey) {
+    pullDataFromCloud(storedKey).catch(err => console.error("Ошибка автозагрузки при запуске:", err));
+  }
   
   // Автоматическое управление Service Worker (выключен на localhost для разработки, включен в сети)
   if ('serviceWorker' in navigator) {
