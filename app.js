@@ -588,7 +588,7 @@ window.moveCardUp = (cardId, event) => {
     const temp = state.cards[index];
     state.cards[index] = state.cards[index - 1];
     state.cards[index - 1] = temp;
-    localStorage.setItem("cashback_cards", JSON.stringify(state.cards));
+    saveState("cashback_cards", JSON.stringify(state.cards));
     renderCards();
   }
 };
@@ -600,7 +600,7 @@ window.moveCardDown = (cardId, event) => {
     const temp = state.cards[index];
     state.cards[index] = state.cards[index + 1];
     state.cards[index + 1] = temp;
-    localStorage.setItem("cashback_cards", JSON.stringify(state.cards));
+    saveState("cashback_cards", JSON.stringify(state.cards));
     renderCards();
   }
 };
@@ -623,7 +623,7 @@ window.toggleCardReveal = (cardId, event) => {
 
 // Сохранение пользовательских связок в LocalStorage
 function saveUserSynonyms() {
-  localStorage.setItem("cashback_user_synonyms", JSON.stringify(state.userSynonyms));
+  saveState("cashback_user_synonyms", JSON.stringify(state.userSynonyms));
 }
 
 // Возвращает список всех уникальных категорий, созданных пользователем на картах
@@ -1078,7 +1078,7 @@ function setupCardDragAndDrop() {
           state.cards[indexDrag] = state.cards[indexTarget];
           state.cards[indexTarget] = temp;
           
-          localStorage.setItem("cashback_cards", JSON.stringify(state.cards));
+          saveState("cashback_cards", JSON.stringify(state.cards));
           renderCards();
         }
       }
@@ -1528,7 +1528,7 @@ function saveCardEdits() {
     });
   }
 
-  localStorage.setItem("cashback_cards", JSON.stringify(state.cards));
+  saveState("cashback_cards", JSON.stringify(state.cards));
   
   updateMonthTitle(); // Обновить общую сумму в шапке
   renderCards();
@@ -1543,7 +1543,7 @@ function deleteCard() {
   if (confirm("Вы действительно хотите удалить эту карту? Это отвяжет её от привязанных подписок.")) {
     // Удаляем карту
     state.cards = state.cards.filter(c => c.id !== currentCardEditingId);
-    localStorage.setItem("cashback_cards", JSON.stringify(state.cards));
+    saveState("cashback_cards", JSON.stringify(state.cards));
 
     // Обновляем подписки, которые ссылались на эту карту
     state.subscriptions.forEach(sub => {
@@ -1551,7 +1551,7 @@ function deleteCard() {
         sub.cardId = ""; // Сбрасываем привязанную карту
       }
     });
-    localStorage.setItem("cashback_subs", JSON.stringify(state.subscriptions));
+    saveState("cashback_subs", JSON.stringify(state.subscriptions));
 
     renderCards();
     renderSubscriptions();
@@ -1719,7 +1719,7 @@ function saveSubscription() {
     state.subscriptions.push({ id: newId, name, cost, period, date, cardId });
   }
 
-  localStorage.setItem("cashback_subs", JSON.stringify(state.subscriptions));
+  saveState("cashback_subs", JSON.stringify(state.subscriptions));
   renderSubscriptions();
   closeModal("sub-modal");
 }
@@ -1731,7 +1731,7 @@ function deleteSubscription() {
 
   if (confirm("Вы действительно хотите удалить эту подписку?")) {
     state.subscriptions = state.subscriptions.filter(s => s.id !== id);
-    localStorage.setItem("cashback_subs", JSON.stringify(state.subscriptions));
+    saveState("cashback_subs", JSON.stringify(state.subscriptions));
     renderSubscriptions();
     closeModal("sub-modal");
   }
@@ -1799,7 +1799,7 @@ function savePayment() {
     state.payments.push({ id: newId, type, name, amount, date, note });
   }
 
-  localStorage.setItem("cashback_payments", JSON.stringify(state.payments));
+  saveState("cashback_payments", JSON.stringify(state.payments));
   renderPayments();
   closeModal("payment-modal");
 }
@@ -1811,7 +1811,7 @@ function deletePayment() {
 
   if (confirm("Вы действительно хотите удалить этот платеж?")) {
     state.payments = state.payments.filter(p => p.id !== id);
-    localStorage.setItem("cashback_payments", JSON.stringify(state.payments));
+    saveState("cashback_payments", JSON.stringify(state.payments));
     renderPayments();
     closeModal("payment-modal");
   }
@@ -1835,10 +1835,44 @@ function closeModal(modalId) {
 // -------------------------------------------------------------
 let isSyncing = false;
 
+// Функция обновления индикатора синхронизации
+function updateSyncIndicator(status) {
+  const indicator = document.getElementById("sync-indicator");
+  if (!indicator) return;
+
+  // Сбрасываем анимацию пульсации
+  indicator.classList.remove("sync-pulse");
+
+  if (status === "disconnected") {
+    indicator.style.background = "#a0a0ab";
+    indicator.title = "Синхронизация отключена";
+  } else if (status === "syncing") {
+    indicator.style.background = "#ff9800";
+    indicator.title = "Синхронизация с облаком...";
+    indicator.classList.add("sync-pulse");
+  } else if (status === "synced") {
+    indicator.style.background = "#4caf50";
+    indicator.title = "Синхронизировано с облаком";
+  } else if (status === "error") {
+    indicator.style.background = "#f44336";
+    indicator.title = "Ошибка авто-сохранения (проверьте интернет)";
+  }
+}
+
+// Функция-обертка для сохранения данных с авто-синхронизацией
+function saveState(key, value) {
+  localStorage.setItem(key, value);
+  if (!isSyncing && ["cashback_cards", "cashback_subs", "cashback_payments", "cashback_user_synonyms"].includes(key)) {
+    pushDataToCloud();
+  }
+}
+
 async function pushDataToCloud() {
   if (isSyncing) return;
   const key = localStorage.getItem("sync_key");
   if (!key) return;
+
+  updateSyncIndicator("syncing");
 
   const data = {
     cashback_cards: JSON.parse(localStorage.getItem("cashback_cards") || "[]"),
@@ -1858,14 +1892,17 @@ async function pushDataToCloud() {
       throw new Error(err.error || 'Ошибка сохранения');
     }
     console.log('Данные успешно сохранены в облаке Vercel KV!');
+    updateSyncIndicator("synced");
   } catch (error) {
     console.error('Ошибка авто-сохранения в облако:', error);
+    updateSyncIndicator("error");
   }
 }
 
 async function pullDataFromCloud(key) {
   if (!key) return false;
   
+  updateSyncIndicator("syncing");
   try {
     const res = await fetch(`/api/sync?key=${encodeURIComponent(key)}`);
     if (!res.ok) {
@@ -1904,23 +1941,17 @@ async function pullDataFromCloud(key) {
       renderPayments();
       updateMonthTitle();
       
+      updateSyncIndicator("synced");
       return true;
     }
+    updateSyncIndicator("synced");
     return false;
   } catch (error) {
     console.error('Ошибка загрузки данных из облака:', error);
+    updateSyncIndicator("error");
     throw error;
   }
 }
-
-// Перехват записи в localStorage для авто-синхронизации
-const originalSetItem = localStorage.setItem;
-localStorage.setItem = function(key, value) {
-  originalSetItem.apply(this, arguments);
-  if (["cashback_cards", "cashback_subs", "cashback_payments", "cashback_user_synonyms"].includes(key)) {
-    pushDataToCloud();
-  }
-};
 
 function initSyncUI() {
   const syncKeyInput = document.getElementById("sync-key-input");
@@ -1993,6 +2024,7 @@ function initSyncUI() {
   if (disconnectSyncBtn) {
     disconnectSyncBtn.onclick = () => {
       localStorage.removeItem("sync_key");
+      updateSyncIndicator("disconnected");
       showStatus("Синхронизация отключена! Перезагрузка...");
       setTimeout(() => {
         location.reload();
@@ -2154,7 +2186,7 @@ function setupEventListeners() {
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = function(evt) {
+      reader.onload = async function(evt) {
         try {
           const data = JSON.parse(evt.target.result);
           
@@ -2175,7 +2207,19 @@ function setupEventListeners() {
           if (statusMsg) {
             statusMsg.style.display = "block";
             statusMsg.style.color = "#4caf50";
-            statusMsg.innerText = "Данные успешно импортированы! Перезагрузка...";
+            statusMsg.innerText = "Данные импортированы! Синхронизация с облаком...";
+          }
+
+          const storedKey = localStorage.getItem("sync_key");
+          if (storedKey) {
+            try {
+              await pushDataToCloud();
+              if (statusMsg) {
+                statusMsg.innerText = "Данные импортированы и синхронизированы! Перезагрузка...";
+              }
+            } catch (syncErr) {
+              console.error("Ошибка синхронизации после импорта:", syncErr);
+            }
           }
           
           setTimeout(() => {
@@ -2207,7 +2251,13 @@ window.onload = () => {
   // Автозагрузка данных из облака при наличии ключа
   const storedKey = localStorage.getItem("sync_key");
   if (storedKey) {
-    pullDataFromCloud(storedKey).catch(err => console.error("Ошибка автозагрузки при запуске:", err));
+    updateSyncIndicator("synced");
+    pullDataFromCloud(storedKey).catch(err => {
+      console.error("Ошибка автозагрузки при запуске:", err);
+      updateSyncIndicator("error");
+    });
+  } else {
+    updateSyncIndicator("disconnected");
   }
   
   // Автоматическое управление Service Worker (выключен на localhost для разработки, включен в сети)
