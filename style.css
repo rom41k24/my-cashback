@@ -532,6 +532,7 @@ select.sort-select option {
   left: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh; /* Динамический вьюпорт для мобильных браузеров */
   z-index: 1000;
   display: flex;
   align-items: flex-end; /* Мобильный стиль — выдвигается снизу */
@@ -565,7 +566,9 @@ select.sort-select option {
   border-top-right-radius: 28px;
   border-top: 1px solid var(--border-color);
   padding: 24px;
+  padding-bottom: calc(34px + env(safe-area-inset-bottom)); /* Отступ снизу для безопасной зоны телефонов */
   max-height: 85vh;
+  max-height: 85dvh;
   overflow-y: auto;
   transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.1, 0.76, 0.55, 0.94);
