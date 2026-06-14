@@ -8,8 +8,21 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const url = process.env.KV_REST_API_URL || process.env.STORAGE_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN || process.env.STORAGE_REST_API_TOKEN;
+  let url = process.env.KV_REST_API_URL || process.env.STORAGE_REST_API_URL;
+  let token = process.env.KV_REST_API_TOKEN || process.env.STORAGE_REST_API_TOKEN;
+
+  if (!url || !token) {
+    const tcpUrl = process.env.STORAGE_URL || process.env.REDIS_URL || process.env.KV_URL;
+    if (tcpUrl) {
+      try {
+        const parsed = new URL(tcpUrl);
+        url = `https://${parsed.hostname}`;
+        token = parsed.password;
+      } catch (err) {
+        console.error('Ошибка парсинга URL базы данных:', err);
+      }
+    }
+  }
 
   if (!url || !token) {
     return res.status(500).json({ 
