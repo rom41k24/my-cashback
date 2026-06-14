@@ -1,5 +1,7 @@
+import Redis from 'ioredis';
+
 export default async function handler(req, res) {
-  // Разрешаем CORS-запросы
+  // Настройка CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -8,53 +10,42 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  let url = process.env.KV_REST_API_URL || process.env.STORAGE_REST_API_URL;
-  let token = process.env.KV_REST_API_TOKEN || process.env.STORAGE_REST_API_TOKEN;
+  // Получаем URL подключения от Vercel (он пропишется как STORAGE_URL или REDIS_URL)
+  const redisUrl = process.env.STORAGE_URL || process.env.REDIS_URL || process.env.KV_URL;
 
-  if (!url || !token) {
-    const tcpUrl = process.env.STORAGE_URL || process.env.REDIS_URL || process.env.KV_URL;
-    if (tcpUrl) {
-      try {
-        const parsed = new URL(tcpUrl);
-        url = `https://${parsed.hostname}`;
-        token = parsed.password;
-      } catch (err) {
-        console.error('Ошибка парсинга URL базы данных:', err);
-      }
-    }
-  }
-
-  if (!url || !token) {
+  if (!redisUrl) {
     return res.status(500).json({ 
-      error: 'База данных Vercel KV не подключена к проекту. Пожалуйста, подключите ее во вкладке Storage в панели управления Vercel.' 
+      error: 'База данных Redis не подключена к проекту. Пожалуйста, подключите ее во вкладке Storage в панели управления Vercel.' 
     });
   }
 
+  let redis;
   try {
-    // Получение данных по ключу (GET)
+    // Подключаемся к Redis
+    redis = new Redis(redisUrl);
+  } catch (err) {
+    console.error('Ошибка инициализации Redis:', err);
+    return res.status(500).json({ error: 'Ошибка подключения к базе данных' });
+  }
+
+  try {
+    // Загрузка данных по ключу (GET)
     if (req.method === 'GET') {
       const { key } = req.query;
       if (!key) {
+        await redis.quit();
         return res.status(400).json({ error: 'Параметр key обязателен' });
       }
 
-      const fetchUrl = `${url}/get/sync:${encodeURIComponent(key)}`;
-      const response = await fetch(fetchUrl, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Ошибка базы данных: ${response.statusText}`);
-      }
-
-      const result = await response.json();
+      const result = await redis.get(`sync:${key}`);
       
-      if (!result || result.result === null) {
+      if (result === null) {
+        await redis.quit();
         return res.status(200).json({ found: false, data: null });
       }
 
-      // Vercel KV возвращает строку, парсим её
-      const parsedData = JSON.parse(result.result);
+      const parsedData = JSON.parse(result);
+      await redis.quit();
       return res.status(200).json({ found: true, data: parsedData });
     }
 
@@ -62,29 +53,22 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       const { key, data } = req.body;
       if (!key || !data) {
+        await redis.quit();
         return res.status(400).json({ error: 'Параметры key и data обязательны' });
       }
 
-      const fetchUrl = `${url}/set/sync:${encodeURIComponent(key)}`;
-      const response = await fetch(fetchUrl, {
-        method: 'POST',
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(JSON.stringify(data)) // Двойная сериализация для Redis
-      });
-
-      if (!response.ok) {
-        throw new Error(`Ошибка базы данных: ${response.statusText}`);
-      }
-
+      await redis.set(`sync:${key}`, JSON.stringify(data));
+      await redis.quit();
       return res.status(200).json({ success: true });
     }
 
+    await redis.quit();
     return res.status(405).json({ error: 'Метод не поддерживается' });
   } catch (error) {
     console.error('Ошибка API синхронизации:', error);
+    if (redis) {
+      try { await redis.quit(); } catch (e) {}
+    }
     return res.status(500).json({ error: error.message });
   }
 }
