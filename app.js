@@ -1275,7 +1275,6 @@ function renderSubscriptions() {
           <span class="date-pill">${formattedDate}</span>
           <span class="days-pill ${daysLeftClass}">${daysLeftText}</span>
           <span class="card-pill ${linkedCard.bankClass}-pill">${linkedCard.name}</span>
-          <span class="category-pill">${brand.category}</span>
         </div>
       </div>
       <div class="sub-right">
