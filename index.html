@@ -88,8 +88,9 @@
           <span class="summary-label">Траты в месяц</span>
           <span class="summary-value" id="total-spend">0 ₽</span>
         </div>
-        <div class="summary-sub">
+        <div class="summary-sub" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
           <span id="sub-count">0 подписок</span>
+          <span id="total-spend-yearly" class="yearly-projection">~0 ₽ в год</span>
         </div>
       </div>
 
@@ -355,6 +356,14 @@
           <select id="sub-card" required>
             <!-- Карты загружаются динамически -->
           </select>
+        </div>
+
+        <div class="form-group-switch">
+          <label for="sub-active">Активная подписка</label>
+          <label class="switch">
+            <input type="checkbox" id="sub-active" checked>
+            <span class="slider round"></span>
+          </label>
         </div>
       </form>
       <div class="modal-footer">

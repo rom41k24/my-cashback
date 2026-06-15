@@ -1091,6 +1091,92 @@ function setupCardDragAndDrop() {
   });
 }
 
+// Генерация градиента на основе имени подписки для уникальной fallback иконки
+function getGradientByName(name) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue1 = Math.abs(hash) % 360;
+  const hue2 = (hue1 + 40) % 360;
+  return `linear-gradient(135deg, hsl(${hue1}, 70%, 55%) 0%, hsl(${hue2}, 75%, 45%) 100%)`;
+}
+
+// Автоматическое определение бренда и категории по имени подписки
+function getSubscriptionBrand(name) {
+  const lowerName = name.toLowerCase();
+  
+  let category = "Другое";
+  let logoHtml = "";
+
+  if (lowerName.includes("янндекс") || lowerName.includes("яндекс") || lowerName.includes("yandex")) {
+    category = "Экосистема";
+    logoHtml = `<div style="background: #E60000; color: #fff; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: var(--font-title); font-weight: 800; font-size: 22px;">Я</div>`;
+  } else if (lowerName.includes("spotify")) {
+    category = "Музыка";
+    logoHtml = `<div style="background: #1DB954; color: #fff; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: var(--font-title); font-weight: 800; font-size: 20px;">S</div>`;
+  } else if (lowerName.includes("netflix")) {
+    category = "Видео";
+    logoHtml = `<div style="background: #000; color: #E50914; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: var(--font-title); font-weight: 800; font-size: 22px;">N</div>`;
+  } else if (lowerName.includes("youtube") || lowerName.includes("ютуб")) {
+    category = "Видео";
+    logoHtml = `<div style="background: #FF0000; color: #fff; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>`;
+  } else if (lowerName.includes("telegram") || lowerName.includes("телеграм")) {
+    category = "Общение";
+    logoHtml = `<div style="background: #229ED9; color: #fff; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4Z"/></svg></div>`;
+  } else if (lowerName.includes("apple") || lowerName.includes("icloud") || lowerName.includes("айклауд")) {
+    category = "Экосистема";
+    logoHtml = `<div style="background: #1a1a1a; color: #fff; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-.96.04-2.13.64-2.82 1.45-.6.69-1.12 1.83-.98 2.94.1.08.2.12.3.12.92 0 2.01-.59 2.51-1.45z"/></svg></div>`;
+  } else if (lowerName.includes("chatgpt") || lowerName.includes("openai") || lowerName.includes("gpt") || lowerName.includes("клауд") || lowerName.includes("claude")) {
+    category = "ИИ / Софт";
+    logoHtml = `<div style="background: #10a37f; color: #fff; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: var(--font-title); font-weight: 800; font-size: 20px;">G</div>`;
+  } else if (lowerName.includes("кинопоиск")) {
+    category = "Видео";
+    logoHtml = `<div style="background: #FF6600; color: #fff; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: var(--font-title); font-weight: 800; font-size: 20px;">К</div>`;
+  } else if (lowerName.includes("мтс") || lowerName.includes("mts")) {
+    category = "Связь";
+    logoHtml = `<div style="background: #ff001c; color: #fff; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: var(--font-title); font-weight: 800; font-size: 13px;">МТС</div>`;
+  } else if (lowerName.includes("тинькофф") || lowerName.includes("tinkoff") || lowerName.includes("т-банк") || lowerName.includes("t-bank")) {
+    category = "Финансы";
+    logoHtml = `<div style="background: #ffdd2d; color: #000; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: var(--font-title); font-weight: 800; font-size: 22px;">Т</div>`;
+  } else if (lowerName.includes("сбер") || lowerName.includes("sber")) {
+    category = "Финансы";
+    logoHtml = `<div style="background: #07a844; color: #fff; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: var(--font-title); font-weight: 800; font-size: 20px;">С</div>`;
+  } else if (lowerName.includes("иви") || lowerName.includes("ivi")) {
+    category = "Видео";
+    logoHtml = `<div style="background: #EC184E; color: #fff; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: var(--font-title); font-weight: 800; font-size: 20px;">И</div>`;
+  } else if (lowerName.includes("adobe") || lowerName.includes("photoshop") || lowerName.includes("адоб")) {
+    category = "Софт";
+    logoHtml = `<div style="background: #FA0F00; color: #fff; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: var(--font-title); font-weight: 800; font-size: 20px;">A</div>`;
+  } else if (lowerName.includes("gym") || lowerName.includes("фитнес") || lowerName.includes("спорт") || lowerName.includes("ddx") || lowerName.includes("зал")) {
+    category = "Спорт";
+    logoHtml = `<div style="background: #111; color: #fff; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6.5 6.5h11M6.5 17.5h11M3 10v4M21 10v4M6.5 6.5v11M17.5 6.5v11"/></svg></div>`;
+  } else {
+    const gradient = getGradientByName(name);
+    const letter = name.charAt(0).toUpperCase() || "?";
+    
+    if (lowerName.includes("книга") || lowerName.includes("book") || lowerName.includes("строки") || lowerName.includes("литрес")) {
+      category = "Книги";
+    } else if (lowerName.includes("домен") || lowerName.includes("хостинг") || lowerName.includes("server") || lowerName.includes("vds") || lowerName.includes("vpn") || lowerName.includes("впн")) {
+      category = "IT / Хостинг";
+    } else if (lowerName.includes("музыка") || lowerName.includes("music")) {
+      category = "Музыка";
+    } else if (lowerName.includes("кино") || lowerName.includes("сериал") || lowerName.includes("tv")) {
+      category = "Видео";
+    } else if (lowerName.includes("игр") || lowerName.includes("game") || lowerName.includes("playstation") || lowerName.includes("xbox") || lowerName.includes("steam")) {
+      category = "Игры";
+    } else if (lowerName.includes("обуч") || lowerName.includes("курс") || lowerName.includes("school") || lowerName.includes("edu") || lowerName.includes("урок")) {
+      category = "Образование";
+    } else if (lowerName.includes("облак") || lowerName.includes("cloud") || lowerName.includes("drive") || lowerName.includes("диск")) {
+      category = "Облако";
+    }
+
+    logoHtml = `<div style="background: ${gradient}; color: #fff; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: var(--font-title); font-weight: 800; font-size: 20px;">${letter}</div>`;
+  }
+
+  return { category, logoHtml };
+}
+
 // Отрисовка списка подписок
 function renderSubscriptions() {
   const container = document.getElementById("subs-container");
@@ -1110,17 +1196,23 @@ function renderSubscriptions() {
     return 0;
   });
 
-  // Расчет суммарных расходов за месяц
+  // Расчет суммарных расходов за месяц и год (только для активных подписок)
   let totalMonthly = 0;
+  let totalYearly = 0;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   sortedSubs.forEach(sub => {
-    // Подсчет суммы
-    if (sub.period === "monthly") {
-      totalMonthly += Number(sub.cost);
-    } else if (sub.period === "yearly") {
-      totalMonthly += Math.round(Number(sub.cost) / 12);
+    const isActive = sub.active !== false;
+
+    if (isActive) {
+      if (sub.period === "monthly") {
+        totalMonthly += Number(sub.cost);
+        totalYearly += Number(sub.cost) * 12;
+      } else if (sub.period === "yearly") {
+        totalMonthly += Math.round(Number(sub.cost) / 12);
+        totalYearly += Number(sub.cost);
+      }
     }
 
     // Определение критичности даты и дней до списания (в локальном часовом поясе)
@@ -1129,14 +1221,14 @@ function renderSubscriptions() {
     const diffTime = subDate - today;
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
     
-    // Подписка считается срочной (warning), если до списания <= 3 дней или она просрочена
-    const isUpcoming = diffDays <= 3;
+    // Подписка считается предупреждающей (warning), только если она активна и до списания <= 3 дней (или просрочена)
+    const isUpcoming = isActive && (diffDays <= 3);
 
     // Поиск привязанной карты для пилла
     const linkedCard = state.cards.find(c => c.id === sub.cardId) || { name: "Не указана", bankClass: "default" };
 
     const cardEl = document.createElement("div");
-    cardEl.className = `sub-card ${isUpcoming ? "warning" : ""}`;
+    cardEl.className = `sub-card ${!isActive ? "paused" : (isUpcoming ? "warning" : "")}`;
     cardEl.onclick = () => openSubModal(sub.id);
 
     // Локализация даты платежа
@@ -1147,31 +1239,43 @@ function renderSubscriptions() {
     let daysLeftText = "";
     let daysLeftClass = "";
 
-    if (diffDays < 0) {
-      const absDays = Math.abs(diffDays);
-      daysLeftText = absDays === 1 ? "Вчера" : `Просрочено на ${absDays} дн.`;
-      daysLeftClass = "days-overdue";
-    } else if (diffDays === 0) {
-      daysLeftText = "Сегодня";
-      daysLeftClass = "days-today";
-    } else if (diffDays === 1) {
-      daysLeftText = "Завтра";
-      daysLeftClass = "days-tomorrow";
-    } else if (diffDays <= 7) {
-      daysLeftText = `Через ${diffDays} дн.`;
-      daysLeftClass = "days-soon";
+    if (!isActive) {
+      daysLeftText = "На паузе";
+      daysLeftClass = "days-paused";
     } else {
-      daysLeftText = `Через ${diffDays} дн.`;
-      daysLeftClass = "days-future";
+      if (diffDays < 0) {
+        const absDays = Math.abs(diffDays);
+        daysLeftText = absDays === 1 ? "Вчера" : `Просрочено на ${absDays} дн.`;
+        daysLeftClass = "days-overdue";
+      } else if (diffDays === 0) {
+        daysLeftText = "Сегодня";
+        daysLeftClass = "days-today";
+      } else if (diffDays === 1) {
+        daysLeftText = "Завтра";
+        daysLeftClass = "days-tomorrow";
+      } else if (diffDays <= 7) {
+        daysLeftText = `Через ${diffDays} дн.`;
+        daysLeftClass = "days-soon";
+      } else {
+        daysLeftText = `Через ${diffDays} дн.`;
+        daysLeftClass = "days-future";
+      }
     }
 
+    // Получение автоопределенного бренда и категории
+    const brand = getSubscriptionBrand(sub.name);
+
     cardEl.innerHTML = `
+      <div class="sub-brand-logo">
+        ${brand.logoHtml}
+      </div>
       <div class="sub-left">
         <span class="sub-title">${sub.name}</span>
         <div class="sub-info">
           <span class="date-pill">${formattedDate}</span>
           <span class="days-pill ${daysLeftClass}">${daysLeftText}</span>
           <span class="card-pill ${linkedCard.bankClass}-pill">${linkedCard.name}</span>
+          <span class="category-pill">${brand.category}</span>
         </div>
       </div>
       <div class="sub-right">
@@ -1184,6 +1288,7 @@ function renderSubscriptions() {
 
   // Обновление сводки
   document.getElementById("total-spend").textContent = `${totalMonthly.toLocaleString('ru-RU')} ₽`;
+  document.getElementById("total-spend-yearly").textContent = `~${totalYearly.toLocaleString('ru-RU')} ₽ в год`;
   document.getElementById("sub-count").textContent = getSubscriptionCountWord(state.subscriptions.length);
 }
 
@@ -1697,12 +1802,14 @@ function openSubModal(subId = null) {
     document.getElementById("sub-period").value = sub.period;
     document.getElementById("sub-date").value = sub.date;
     document.getElementById("sub-card").value = sub.cardId;
+    document.getElementById("sub-active").checked = sub.active !== false;
 
     deleteBtn.style.display = "block";
   } else {
     // Добавление новой
     document.getElementById("modal-sub-title").textContent = "Новая подписка";
     document.getElementById("edit-sub-id").value = "";
+    document.getElementById("sub-active").checked = true;
     deleteBtn.style.display = "none";
     
     // Установка сегодняшней даты по умолчанию
@@ -1727,17 +1834,18 @@ function saveSubscription() {
   const period = document.getElementById("sub-period").value;
   const date = document.getElementById("sub-date").value;
   const cardId = document.getElementById("sub-card").value;
+  const active = document.getElementById("sub-active").checked;
 
   if (id) {
     // Редактирование существующей
     const subIndex = state.subscriptions.findIndex(s => s.id === id);
     if (subIndex !== -1) {
-      state.subscriptions[subIndex] = { id, name, cost, period, date, cardId };
+      state.subscriptions[subIndex] = { id, name, cost, period, date, cardId, active };
     }
   } else {
     // Добавление новой
     const newId = "sub_" + Date.now();
-    state.subscriptions.push({ id: newId, name, cost, period, date, cardId });
+    state.subscriptions.push({ id: newId, name, cost, period, date, cardId, active });
   }
 
   saveState("cashback_subs", JSON.stringify(state.subscriptions));
