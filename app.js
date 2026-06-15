@@ -1123,11 +1123,14 @@ function renderSubscriptions() {
       totalMonthly += Math.round(Number(sub.cost) / 12);
     }
 
-    // Определение критичности даты (ближайшие 3 дня)
-    const subDate = new Date(sub.date);
+    // Определение критичности даты и дней до списания (в локальном часовом поясе)
+    const [year, month, day] = sub.date.split('-').map(Number);
+    const subDate = new Date(year, month - 1, day);
     const diffTime = subDate - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    const isUpcoming = diffDays >= 0 && diffDays <= 3;
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Подписка считается срочной (warning), если до списания <= 3 дней или она просрочена
+    const isUpcoming = diffDays <= 3;
 
     // Поиск привязанной карты для пилла
     const linkedCard = state.cards.find(c => c.id === sub.cardId) || { name: "Не указана", bankClass: "default" };
@@ -1140,16 +1143,34 @@ function renderSubscriptions() {
     const dateOptions = { day: 'numeric', month: 'short' };
     const formattedDate = subDate.toLocaleDateString('ru-RU', dateOptions);
 
-    let warningPill = "";
-    if (isUpcoming) {
-      warningPill = diffDays === 0 ? "Сегодня" : (diffDays === 1 ? "Завтра" : `Через ${diffDays} дн.`);
+    // Расчет текста и класса для индикатора дней
+    let daysLeftText = "";
+    let daysLeftClass = "";
+
+    if (diffDays < 0) {
+      const absDays = Math.abs(diffDays);
+      daysLeftText = absDays === 1 ? "Вчера" : `Просрочено на ${absDays} дн.`;
+      daysLeftClass = "days-overdue";
+    } else if (diffDays === 0) {
+      daysLeftText = "Сегодня";
+      daysLeftClass = "days-today";
+    } else if (diffDays === 1) {
+      daysLeftText = "Завтра";
+      daysLeftClass = "days-tomorrow";
+    } else if (diffDays <= 7) {
+      daysLeftText = `Через ${diffDays} дн.`;
+      daysLeftClass = "days-soon";
+    } else {
+      daysLeftText = `Через ${diffDays} дн.`;
+      daysLeftClass = "days-future";
     }
 
     cardEl.innerHTML = `
       <div class="sub-left">
         <span class="sub-title">${sub.name}</span>
         <div class="sub-info">
-          <span class="date-pill">${isUpcoming ? warningPill : formattedDate}</span>
+          <span class="date-pill">${formattedDate}</span>
+          <span class="days-pill ${daysLeftClass}">${daysLeftText}</span>
           <span class="card-pill ${linkedCard.bankClass}-pill">${linkedCard.name}</span>
         </div>
       </div>
