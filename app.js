@@ -1281,6 +1281,13 @@ function renderSubscriptions() {
         <span class="sub-price">${sub.cost} ₽</span>
         <span class="sub-period-text">${sub.period === "monthly" ? "в месяц" : "в год"}</span>
       </div>
+      ${isActive && diffDays <= 3 ? `
+        <button class="btn-sub-check" title="Отметить как оплаченную (перенести дату)" onclick="event.stopPropagation(); confirmSubscriptionPayment('${sub.id}');">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="3" fill="none">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </button>
+      ` : ''}
     `;
     container.appendChild(cardEl);
   });
@@ -1780,6 +1787,59 @@ function showCopyNotification(message) {
     toast.style.animation = "fadeOut 0.2s ease forwards";
     setTimeout(() => toast.remove(), 200);
   }, 1800);
+}
+
+// Функция сдвига даты списания при оплате подписки
+function shiftSubscriptionDate(dateStr, period) {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  
+  if (period === "monthly") {
+    let nextMonth = month;
+    let nextYear = year;
+    if (month === 12) {
+      nextMonth = 1;
+      nextYear += 1;
+    } else {
+      nextMonth += 1;
+    }
+    const daysInNextMonth = new Date(nextYear, nextMonth, 0).getDate();
+    const nextDay = Math.min(day, daysInNextMonth);
+    
+    const formattedMonth = String(nextMonth).padStart(2, '0');
+    const formattedDay = String(nextDay).padStart(2, '0');
+    return `${nextYear}-${formattedMonth}-${formattedDay}`;
+  } else if (period === "yearly") {
+    let nextYear = year + 1;
+    let nextDay = day;
+    if (month === 2 && day === 29) {
+      const isLeap = (nextYear % 4 === 0 && nextYear % 100 !== 0) || (nextYear % 400 === 0);
+      if (!isLeap) {
+        nextDay = 28;
+      }
+    }
+    const formattedMonth = String(month).padStart(2, '0');
+    const formattedDay = String(nextDay).padStart(2, '0');
+    return `${nextYear}-${formattedMonth}-${formattedDay}`;
+  }
+  return dateStr;
+}
+
+// Подтверждение оплаты подписки и перенос даты на следующий период
+function confirmSubscriptionPayment(subId) {
+  const sub = state.subscriptions.find(s => s.id === subId);
+  if (!sub) return;
+
+  const nextDateStr = shiftSubscriptionDate(sub.date, sub.period);
+  sub.date = nextDateStr;
+
+  saveState("cashback_subs", JSON.stringify(state.subscriptions));
+  renderSubscriptions();
+
+  // Уведомление о продлении
+  const [ny, nm, nd] = nextDateStr.split('-').map(Number);
+  const nextDateObj = new Date(ny, nm - 1, nd);
+  const nextDateFormatted = nextDateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  showCopyNotification(`Подписка "${sub.name}" продлена до ${nextDateFormatted}`);
 }
 
 // Открытие модалки подписки

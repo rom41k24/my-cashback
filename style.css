@@ -1829,3 +1829,30 @@ input:checked + .slider:before {
   border: 1px solid rgba(255, 255, 255, 0.02);
 }
 
+/* Кнопка отметки об оплате подписки */
+.btn-sub-check {
+  background: rgba(7, 168, 68, 0.08);
+  border: 1px solid rgba(7, 168, 68, 0.2);
+  color: #07a844;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-sub-check:hover {
+  background: rgba(7, 168, 68, 0.16);
+  border-color: rgba(7, 168, 68, 0.4);
+  transform: scale(1.06);
+}
+
+.btn-sub-check:active {
+  transform: scale(0.94);
+}
+
