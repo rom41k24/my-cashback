@@ -1,47 +1,47 @@
 // Данные по умолчанию (если нет в localStorage)
 const DEFAULT_CARDS = [
   {
-    id: "mts_debit",
-    name: "МТС-дебетовая",
+    id: "yandex",
+    name: "Яндекс Карта",
+    bankClass: "yandex",
+    bankName: "ЯНДЕКС БАНК",
+    cardType: "Плюс",
+    network: "mir",
+    categories: [
+      { name: "Все покупки", value: 2 },
+      { name: "Яндекс Такси (Комфорт, Комфорт+, Ultima)", value: 5 },
+      { name: "Яндекс Лавка", value: 5 },
+      { name: "Яндекс Еда и Деливери", value: 100 },
+      { name: "Самокаты", value: 7 }
+    ]
+  },
+  {
+    id: "mts",
+    name: "МТС Банк",
     bankClass: "mts",
     bankName: "МТС БАНК",
     cardType: "Дебетовая",
     network: "visa",
     categories: [
-      { name: "Спорттовары", value: 5 },
-      { name: "Заправки", value: 2 },
-      { name: "Детские товары*", value: 5 },
-      { name: "Отели", value: 2 },
-      { name: "Дом и ремонт", value: 3 }
-    ]
-  },
-  {
-    id: "mts_credit",
-    name: "МТС-кредитка",
-    bankClass: "mts",
-    bankName: "МТС БАНК",
-    cardType: "Кредитная",
-    network: "mastercard",
-    categories: [
-      { name: "На все", value: 1 },
-      { name: "Одежда", value: 5 },
-      { name: "Фастфуд", value: 3 },
-      { name: "Рестораны и доставки", value: 5 },
-      { name: "Супермаркеты", value: 5 }
+      { name: "Супермаркеты", value: 5 },
+      { name: "Здоровье", value: 3 },
+      { name: "Рестораны", value: 5 },
+      { name: "Техника", value: 7 },
+      { name: "Спорттовары", value: 5 }
     ]
   },
   {
     id: "tinkoff",
-    name: "Тинькофф",
+    name: "Т-Банк",
     bankClass: "tinkoff",
     bankName: "Т-БАНК",
     cardType: "Black",
     network: "mir",
     categories: [
+      { name: "Все покупки", value: 1 },
       { name: "Аптеки", value: 5 },
-      { name: "Развлечения", value: 5 },
-      { name: "Жд-билеты", value: 5 },
-      { name: "На все", value: 1 }
+      { name: "Одежда и обувь", value: 5 },
+      { name: "Развлечения", value: 5 }
     ]
   },
   {
@@ -52,25 +52,25 @@ const DEFAULT_CARDS = [
     cardType: "Classic",
     network: "visa",
     categories: [
-      { name: "На все", value: 1 },
       { name: "Цветы", value: 5 },
-      { name: "Дикси-доставка", value: 19 },
-      { name: "Красота", value: 3 }
+      { name: "Красота", value: 5 },
+      { name: "Дикси Доставка", value: 20 },
+      { name: "Цифровые товары", value: 6 }
     ]
   },
   {
-    id: "yandex",
-    name: "Яндекс Карта",
-    bankClass: "yandex",
-    bankName: "ЯНДЕКС БАНК",
-    cardType: "Плюс",
+    id: "vtb",
+    name: "ВТБ",
+    bankClass: "vtb",
+    bankName: "ВТБ",
+    cardType: "Дебетовая",
     network: "mir",
     categories: [
-      { name: "Яндекс Еда и Деливери", value: 7 },
-      { name: "Билеты на концерты", value: 10 },
-      { name: "Такси", value: 5 },
-      { name: "Книги", value: 10 },
-      { name: "Развлечения", value: 5 }
+      { name: "Кафе и рестораны", value: 5 },
+      { name: "Почта России", value: 10 },
+      { name: "Театры и кино", value: 15 },
+      { name: "Все остальные покупки", value: 1 },
+      { name: "Транспорт", value: 5 }
     ]
   }
 ];
@@ -98,7 +98,7 @@ const DEFAULT_SUBSCRIPTIONS = [
     cost: 2500,
     period: "monthly",
     date: "2026-06-15",
-    cardId: "mts_credit"
+    cardId: "mts"
   }
 ];
 
@@ -387,6 +387,73 @@ let revealedCardIds = new Set();
 
 // Инициализация данных
 function initApp() {
+  // Принудительно обновляем категории существующих карт без удаления остальных данных карт
+  if (!localStorage.getItem("cashback_v3_categories_updated")) {
+    const storedCards = localStorage.getItem("cashback_cards");
+    if (storedCards) {
+      try {
+        const cards = JSON.parse(storedCards);
+        const newCategoriesMap = {
+          yandex: [
+            { name: "Все покупки", value: 2 },
+            { name: "Яндекс Такси (Комфорт, Комфорт+, Ultima)", value: 5 },
+            { name: "Яндекс Лавка", value: 5 },
+            { name: "Яндекс Еда и Деливери", value: 100 },
+            { name: "Самокаты", value: 7 }
+          ],
+          mts: [
+            { name: "Супермаркеты", value: 5 },
+            { name: "Здоровье", value: 3 },
+            { name: "Рестораны", value: 5 },
+            { name: "Техника", value: 7 },
+            { name: "Спорттовары", value: 5 }
+          ],
+          tinkoff: [
+            { name: "Все покупки", value: 1 },
+            { name: "Аптеки", value: 5 },
+            { name: "Одежда и обувь", value: 5 },
+            { name: "Развлечения", value: 5 }
+          ],
+          alfa: [
+            { name: "Цветы", value: 5 },
+            { name: "Красота", value: 5 },
+            { name: "Дикси Доставка", value: 20 },
+            { name: "Цифровые товары", value: 6 }
+          ],
+          vtb: [
+            { name: "Кафе и рестораны", value: 5 },
+            { name: "Почта России", value: 10 },
+            { name: "Театры и кино", value: 15 },
+            { name: "Все остальные покупки", value: 1 },
+            { name: "Транспорт", value: 5 }
+          ]
+        };
+
+        let updatedAny = false;
+        cards.forEach(card => {
+          let key = null;
+          if (card.bankClass === "yandex" || card.id === "yandex") key = "yandex";
+          else if (card.bankClass === "mts" || card.id === "mts" || card.id?.startsWith("mts_")) key = "mts";
+          else if (card.bankClass === "tinkoff" || card.id === "tinkoff") key = "tinkoff";
+          else if (card.bankClass === "alfa" || card.id === "alfa") key = "alfa";
+          else if (card.bankClass === "vtb" || card.id === "vtb") key = "vtb";
+
+          if (key && newCategoriesMap[key]) {
+            card.categories = newCategoriesMap[key];
+            updatedAny = true;
+          }
+        });
+
+        if (updatedAny) {
+          localStorage.setItem("cashback_cards", JSON.stringify(cards));
+        }
+      } catch (e) {
+        console.error("Ошибка обновления категорий:", e);
+      }
+    }
+    localStorage.setItem("cashback_v3_categories_updated", "true");
+  }
+
   const storedCards = localStorage.getItem("cashback_cards");
   const storedSubs = localStorage.getItem("cashback_subs");
   const storedPayments = localStorage.getItem("cashback_payments");
