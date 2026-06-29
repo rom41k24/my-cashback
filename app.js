@@ -521,7 +521,7 @@ function updateMonthTitle() {
   const totalCashback = state.cards.reduce((sum, card) => sum + (Number(card.accumulated) || 0), 0);
   const subtitleEl = document.querySelector("#cashback-screen .subtitle");
   if (subtitleEl) {
-    subtitleEl.innerHTML = `Ваши карты • Сэкономлено: <strong>${totalCashback.toLocaleString('ru-RU')} ₽</strong>`;
+    subtitleEl.innerHTML = `Сэкономлено: <strong>${totalCashback.toLocaleString('ru-RU')} ₽</strong>`;
   }
 }
 
