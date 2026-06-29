@@ -460,12 +460,15 @@ function initApp() {
   state.userSynonyms = storedUserSynonyms ? JSON.parse(storedUserSynonyms) : {};
   state.sortMode = localStorage.getItem("sub_sort_mode") || "date-asc";
 
-  // Запуск миграции для локально загруженных карт
-  const didMigrate = migrateCardCategories(state.cards);
-  if (didMigrate) {
-    localStorage.setItem("cashback_cards", JSON.stringify(state.cards));
-    if (localStorage.getItem("sync_key")) {
-      pushDataToCloud().catch(err => console.error("Ошибка автосинхронизации после миграции:", err));
+  // Запуск миграции для локально загруженных карт (выполняется только один раз)
+  if (!localStorage.getItem("cashback_v3_categories_updated")) {
+    const didMigrate = migrateCardCategories(state.cards);
+    if (didMigrate) {
+      localStorage.setItem("cashback_cards", JSON.stringify(state.cards));
+    }
+    // Если облачная синхронизация отключена, сразу помечаем миграцию как выполненную
+    if (!localStorage.getItem("sync_key")) {
+      localStorage.setItem("cashback_v3_categories_updated", "true");
     }
   }
 
@@ -2178,15 +2181,20 @@ async function pullDataFromCloud(key) {
       if (data.cashback_cards) {
         state.cards = data.cashback_cards;
         
-        // Мигрируем подгруженные из облака карты
-        const didMigrateCloud = migrateCardCategories(state.cards);
-        localStorage.setItem("cashback_cards", JSON.stringify(state.cards));
-        
-        if (didMigrateCloud) {
-          // Если категории изменились, сразу отправляем обновленные данные обратно в облако
-          setTimeout(() => {
-            pushDataToCloud().catch(err => console.error("Ошибка автосинхронизации после облачной миграции:", err));
-          }, 500);
+        // Мигрируем подгруженные из облака карты только один раз при первом запуске этой версии
+        if (!localStorage.getItem("cashback_v3_categories_updated")) {
+          const didMigrateCloud = migrateCardCategories(state.cards);
+          localStorage.setItem("cashback_cards", JSON.stringify(state.cards));
+          
+          if (didMigrateCloud) {
+            // Если категории изменились, сразу отправляем обновленные данные обратно в облако
+            setTimeout(() => {
+              pushDataToCloud().catch(err => console.error("Ошибка автосинхронизации после облачной миграции:", err));
+            }, 500);
+          }
+          localStorage.setItem("cashback_v3_categories_updated", "true");
+        } else {
+          localStorage.setItem("cashback_cards", JSON.stringify(state.cards));
         }
       }
       if (data.cashback_subs) {
