@@ -385,75 +385,70 @@ let draggedCardId = null;
 let cvvVisible = false;
 let revealedCardIds = new Set();
 
-// Инициализация данных
-function initApp() {
-  // Принудительно обновляем категории существующих карт без удаления остальных данных карт
-  if (!localStorage.getItem("cashback_v3_categories_updated")) {
-    const storedCards = localStorage.getItem("cashback_cards");
-    if (storedCards) {
-      try {
-        const cards = JSON.parse(storedCards);
-        const newCategoriesMap = {
-          yandex: [
-            { name: "Все покупки", value: 2 },
-            { name: "Яндекс Такси (Комфорт, Комфорт+, Ultima)", value: 5 },
-            { name: "Яндекс Лавка", value: 5 },
-            { name: "Яндекс Еда и Деливери", value: 100 },
-            { name: "Самокаты", value: 7 }
-          ],
-          mts: [
-            { name: "Супермаркеты", value: 5 },
-            { name: "Здоровье", value: 3 },
-            { name: "Рестораны", value: 5 },
-            { name: "Техника", value: 7 },
-            { name: "Спорттовары", value: 5 }
-          ],
-          tinkoff: [
-            { name: "Все покупки", value: 1 },
-            { name: "Аптеки", value: 5 },
-            { name: "Одежда и обувь", value: 5 },
-            { name: "Развлечения", value: 5 }
-          ],
-          alfa: [
-            { name: "Цветы", value: 5 },
-            { name: "Красота", value: 5 },
-            { name: "Дикси Доставка", value: 20 },
-            { name: "Цифровые товары", value: 6 }
-          ],
-          vtb: [
-            { name: "Кафе и рестораны", value: 5 },
-            { name: "Почта России", value: 10 },
-            { name: "Театры и кино", value: 15 },
-            { name: "Все остальные покупки", value: 1 },
-            { name: "Транспорт", value: 5 }
-          ]
-        };
+// Функция миграции категорий карт на новые значения за июль
+function migrateCardCategories(cards) {
+  if (!Array.isArray(cards)) return false;
+  
+  const newCategoriesMap = {
+    yandex: [
+      { name: "Все покупки", value: 2 },
+      { name: "Яндекс Такси (Комфорт, Комфорт+, Ultima)", value: 5 },
+      { name: "Яндекс Лавка", value: 5 },
+      { name: "Яндекс Еда и Деливери", value: 100 },
+      { name: "Самокаты", value: 7 }
+    ],
+    mts: [
+      { name: "Супермаркеты", value: 5 },
+      { name: "Здоровье", value: 3 },
+      { name: "Рестораны", value: 5 },
+      { name: "Техника", value: 7 },
+      { name: "Спорттовары", value: 5 }
+    ],
+    tinkoff: [
+      { name: "Все покупки", value: 1 },
+      { name: "Аптеки", value: 5 },
+      { name: "Одежда и обувь", value: 5 },
+      { name: "Развлечения", value: 5 }
+    ],
+    alfa: [
+      { name: "Цветы", value: 5 },
+      { name: "Красота", value: 5 },
+      { name: "Дикси Доставка", value: 20 },
+      { name: "Цифровые товары", value: 6 }
+    ],
+    vtb: [
+      { name: "Кафе и рестораны", value: 5 },
+      { name: "Почта России", value: 10 },
+      { name: "Театры и кино", value: 15 },
+      { name: "Все остальные покупки", value: 1 },
+      { name: "Транспорт", value: 5 }
+    ]
+  };
 
-        let updatedAny = false;
-        cards.forEach(card => {
-          let key = null;
-          if (card.bankClass === "yandex" || card.id === "yandex") key = "yandex";
-          else if (card.bankClass === "mts" || card.id === "mts" || card.id?.startsWith("mts_")) key = "mts";
-          else if (card.bankClass === "tinkoff" || card.id === "tinkoff") key = "tinkoff";
-          else if (card.bankClass === "alfa" || card.id === "alfa") key = "alfa";
-          else if (card.bankClass === "vtb" || card.id === "vtb") key = "vtb";
+  let updatedAny = false;
+  cards.forEach(card => {
+    let key = null;
+    if (card.bankClass === "yandex" || card.id === "yandex") key = "yandex";
+    else if (card.bankClass === "mts" || card.id === "mts" || card.id?.startsWith("mts_")) key = "mts";
+    else if (card.bankClass === "tinkoff" || card.id === "tinkoff") key = "tinkoff";
+    else if (card.bankClass === "alfa" || card.id === "alfa") key = "alfa";
+    else if (card.bankClass === "vtb" || card.id === "vtb") key = "vtb";
 
-          if (key && newCategoriesMap[key]) {
-            card.categories = newCategoriesMap[key];
-            updatedAny = true;
-          }
-        });
-
-        if (updatedAny) {
-          localStorage.setItem("cashback_cards", JSON.stringify(cards));
-        }
-      } catch (e) {
-        console.error("Ошибка обновления категорий:", e);
+    if (key && newCategoriesMap[key]) {
+      const currentCategoriesStr = JSON.stringify(card.categories);
+      const newCategoriesStr = JSON.stringify(newCategoriesMap[key]);
+      if (currentCategoriesStr !== newCategoriesStr) {
+        card.categories = newCategoriesMap[key];
+        updatedAny = true;
       }
     }
-    localStorage.setItem("cashback_v3_categories_updated", "true");
-  }
+  });
 
+  return updatedAny;
+}
+
+// Инициализация данных
+function initApp() {
   const storedCards = localStorage.getItem("cashback_cards");
   const storedSubs = localStorage.getItem("cashback_subs");
   const storedPayments = localStorage.getItem("cashback_payments");
@@ -464,6 +459,15 @@ function initApp() {
   state.payments = storedPayments ? JSON.parse(storedPayments) : DEFAULT_PAYMENTS;
   state.userSynonyms = storedUserSynonyms ? JSON.parse(storedUserSynonyms) : {};
   state.sortMode = localStorage.getItem("sub_sort_mode") || "date-asc";
+
+  // Запуск миграции для локально загруженных карт
+  const didMigrate = migrateCardCategories(state.cards);
+  if (didMigrate) {
+    localStorage.setItem("cashback_cards", JSON.stringify(state.cards));
+    if (localStorage.getItem("sync_key")) {
+      pushDataToCloud().catch(err => console.error("Ошибка автосинхронизации после миграции:", err));
+    }
+  }
 
   updateMonthTitle();
   setupNavigation();
@@ -2172,8 +2176,18 @@ async function pullDataFromCloud(key) {
       isSyncing = true; // Отключаем перехват во время загрузки
       
       if (data.cashback_cards) {
-        localStorage.setItem("cashback_cards", JSON.stringify(data.cashback_cards));
         state.cards = data.cashback_cards;
+        
+        // Мигрируем подгруженные из облака карты
+        const didMigrateCloud = migrateCardCategories(state.cards);
+        localStorage.setItem("cashback_cards", JSON.stringify(state.cards));
+        
+        if (didMigrateCloud) {
+          // Если категории изменились, сразу отправляем обновленные данные обратно в облако
+          setTimeout(() => {
+            pushDataToCloud().catch(err => console.error("Ошибка автосинхронизации после облачной миграции:", err));
+          }, 500);
+        }
       }
       if (data.cashback_subs) {
         localStorage.setItem("cashback_subs", JSON.stringify(data.cashback_subs));
