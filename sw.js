@@ -1,25 +1,23 @@
-const CACHE_NAME = 'cashback-tracker-v15';
+const CACHE_NAME = 'cashback-tracker-v16';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
-  './app.js?v=15',
+  './app.js?v=16',
   './manifest.json',
   './icon.svg'
 ];
 
-// Установка сервис-воркера и кэширование ресурсов
+// Установка сервис-воркера и мгновенная активация
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(ASSETS);
-      })
-      .then(() => self.skipWaiting())
+      .then(cache => cache.addAll(ASSETS))
   );
 });
 
-// Активация сервис-воркера и удаление старого кэша
+// Активация сервис-воркера и очистка любого старого кэша
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
@@ -34,17 +32,26 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Перехват запросов и обслуживание из кэша
+// Перехват запросов: Network-First для свежих данных, Cache при отсутствии интернета
 self.addEventListener('fetch', event => {
+  // Не кэшируем API-запросы синхронизации
+  if (event.request.url.includes('/api/')) {
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request)
-      .then(cachedResponse => {
-        if (cachedResponse) {
-          return cachedResponse;
+    fetch(event.request)
+      .then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseClone);
+          });
         }
-        return fetch(event.request).catch(() => {
-          // Возвращаем оффлайн заглушку при необходимости
-        });
+        return networkResponse;
+      })
+      .catch(() => {
+        return caches.match(event.request);
       })
   );
 });
