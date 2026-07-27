@@ -2985,8 +2985,7 @@ function renderDepositsList() {
   if (!state.deposits || state.deposits.length === 0) {
     container.innerHTML = `
       <div style="text-align: center; color: var(--text-secondary); padding: 24px 12px; background: rgba(255,255,255,0.02); border-radius: 14px; border: 1px dashed var(--border-color);">
-        <p style="margin-bottom: 8px; font-weight: 500;">У вас пока нет активных вкладов</p>
-        <button class="btn btn-secondary" onclick="openDepositModal()" style="font-size: 12px; padding: 6px 14px;">+ Добавить первый вклад</button>
+        <p style="font-weight: 500;">У вас пока нет активных вкладов</p>
       </div>
     `;
     return;
