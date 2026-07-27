@@ -2890,8 +2890,8 @@ function renderAnalytics() {
     periodLabelEl.textContent = periodTextMap[period] || "За выбранный период";
   }
 
-  // Рендеринг графика
-  renderAnalyticsChart(monthsCount);
+  // Рендеринг динамического графика
+  renderAnalyticsChart();
 
   // Рендеринг разбивки кешбэка по банкам
   renderBanksBreakdown(monthKeys, period);
@@ -2904,17 +2904,34 @@ function renderAnalytics() {
 }
 
 // Отрисовка столбчатой диаграммы доходов
-function renderAnalyticsChart(monthsCount = 6) {
+function renderAnalyticsChart() {
   const chartContainer = document.getElementById("analytics-chart-container");
   if (!chartContainer) return;
 
   const monthNamesShort = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
   const now = new Date();
 
+  // Автоматически находит самый ранний месяц из истории, чтобы отобразить его на графике (минимум 6 месяцев)
+  let maxHistoryOffset = 5;
+  if (Array.isArray(state.cashbackHistory)) {
+    state.cashbackHistory.forEach(h => {
+      if (h.monthKey) {
+        const parts = h.monthKey.split('-').map(Number);
+        if (parts.length === 2) {
+          const [y, m] = parts;
+          const offset = (now.getFullYear() - y) * 12 + (now.getMonth() - (m - 1));
+          if (offset > maxHistoryOffset) {
+            maxHistoryOffset = Math.min(11, offset); // показываем до 12 месяцев
+          }
+        }
+      }
+    });
+  }
+
   const chartData = [];
   let maxMonthlyVal = 1;
 
-  for (let i = monthsCount - 1; i >= 0; i--) {
+  for (let i = maxHistoryOffset; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const monthLabel = monthNamesShort[d.getMonth()];
@@ -3063,7 +3080,10 @@ function renderCashbackHistoryList() {
     if (h.byCard && Object.keys(h.byCard).length > 0) {
       cardsPills = Object.values(h.byCard)
         .filter(c => c && c.amount > 0)
-        .map(c => `<span class="history-card-pill">${c.bank ? c.bank + ' ' : ''}${c.name}: ${c.amount.toLocaleString('ru-RU')} ₽</span>`)
+        .map(c => {
+          const displayName = (c.bank && c.name && c.bank !== c.name) ? `${c.bank} ${c.name}` : (c.bank || c.name || "Карта");
+          return `<span class="history-card-pill">${displayName}: ${c.amount.toLocaleString('ru-RU')} ₽</span>`;
+        })
         .join('');
     } else if (h.note) {
       cardsPills = `<span class="history-card-pill">${h.note}</span>`;
