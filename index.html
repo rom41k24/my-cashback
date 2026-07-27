@@ -222,6 +222,16 @@
         </div>
       </div>
 
+      <!-- Кешбэк по банкам -->
+      <div class="analytics-block">
+        <div class="analytics-block-header">
+          <span class="section-title">Кешбэк по банкам</span>
+        </div>
+        <div class="banks-breakdown-list" id="banks-breakdown-container">
+          <!-- Генерируется через JS -->
+        </div>
+      </div>
+
       <!-- Вклады и накопительные счета -->
       <div class="analytics-block">
         <div class="analytics-block-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -727,13 +737,18 @@
           </div>
 
           <div class="form-group">
-            <label for="history-entry-amount">Заработанный кешбэк (₽)</label>
-            <input type="number" id="history-entry-amount" placeholder="Например: 3500" min="0" step="1" required>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <label style="margin-bottom: 0; font-weight: 600;">Кешбэк по банкам</label>
+              <button type="button" class="btn-text-link" id="btn-add-history-bank-row" style="font-size: 12px;">+ Добавить банк</button>
+            </div>
+            <div id="history-banks-rows-container" style="display: flex; flex-direction: column; gap: 8px;">
+              <!-- Динамические поля банка и суммы -->
+            </div>
           </div>
 
-          <div class="form-group">
-            <label for="history-entry-note">Примечание / Разбивка (необязательно)</label>
-            <input type="text" id="history-entry-note" placeholder="Например: Т-Банк 2000, Альфа 1500">
+          <div class="form-group" style="margin-top: 14px;">
+            <label for="history-entry-amount">Итого за месяц (₽)</label>
+            <input type="number" id="history-entry-amount" placeholder="Например: 3500" min="0" step="1" required>
           </div>
 
           <div style="display: flex; gap: 12px; margin-top: 24px;">
@@ -745,6 +760,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=19"></script>
+  <script src="app.js?v=20"></script>
 </body>
 </html>

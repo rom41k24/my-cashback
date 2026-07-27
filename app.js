@@ -2893,6 +2893,9 @@ function renderAnalytics() {
   // Рендеринг графика
   renderAnalyticsChart(monthsCount);
 
+  // Рендеринг разбивки кешбэка по банкам
+  renderBanksBreakdown(monthKeys, period);
+
   // Рендеринг списка вкладов
   renderDepositsList();
 
@@ -3083,14 +3086,127 @@ function renderCashbackHistoryList() {
   container.innerHTML = html;
 }
 
+// Отрисовка разбивки кешбэка по банкам
+function renderBanksBreakdown(monthKeys, period) {
+  const container = document.getElementById("banks-breakdown-container");
+  if (!container) return;
+
+  const bankTotals = {};
+
+  // 1. Собираем кешбэк из истории за прошлые месяцы
+  state.cashbackHistory.forEach(h => {
+    if (period === "all" || monthKeys.includes(h.monthKey)) {
+      if (Array.isArray(h.byBank) && h.byBank.length > 0) {
+        h.byBank.forEach(b => {
+          if (b && b.bank && Number(b.amount) > 0) {
+            const bName = b.bank.trim();
+            bankTotals[bName] = (bankTotals[bName] || 0) + Number(b.amount);
+          }
+        });
+      } else if (h.byCard && Object.keys(h.byCard).length > 0) {
+        Object.values(h.byCard).forEach(c => {
+          if (c && c.amount > 0) {
+            const bName = (c.bank || c.name || "Прочие").trim();
+            bankTotals[bName] = (bankTotals[bName] || 0) + Number(c.amount);
+          }
+        });
+      } else if (h.totalCashback > 0) {
+        const bName = (h.note || "Прочие").trim();
+        bankTotals[bName] = (bankTotals[bName] || 0) + Number(h.totalCashback);
+      }
+    }
+  });
+
+  // 2. Добавляем текущий кешбэк по активным картам (если выбран текущий месяц или "всё время")
+  if (period === "month" || period === "all") {
+    state.cards.forEach(c => {
+      const amt = Number(c.accumulated) || 0;
+      if (amt > 0) {
+        const bName = (c.bank || c.name || "Карта").trim();
+        bankTotals[bName] = (bankTotals[bName] || 0) + amt;
+      }
+    });
+  }
+
+  const sortedBanks = Object.entries(bankTotals).sort((a, b) => b[1] - a[1]);
+  const grandTotal = sortedBanks.reduce((sum, [, amt]) => sum + amt, 0);
+
+  if (sortedBanks.length === 0 || grandTotal <= 0) {
+    container.innerHTML = `
+      <div style="text-align: center; color: var(--text-secondary); padding: 16px 12px; font-size: 13px;">
+        Нет данных по банкам за этот период.
+      </div>
+    `;
+    return;
+  }
+
+  const html = sortedBanks.map(([bankName, bankAmount]) => {
+    const pct = Math.round((bankAmount / grandTotal) * 100);
+    return `
+      <div class="bank-breakdown-item">
+        <div class="bank-breakdown-top">
+          <span class="bank-breakdown-name">${bankName}</span>
+          <span class="bank-breakdown-amount">+${bankAmount.toLocaleString('ru-RU')} ₽ <small style="color: var(--text-secondary); font-size: 11px; font-weight: 400;">(${pct}%)</small></span>
+        </div>
+        <div class="bank-breakdown-track">
+          <div class="bank-breakdown-bar" style="width: ${pct}%;"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = html;
+}
+
+// Вспомогательная функция для добавления строки банка в модалку истории
+function addHistoryBankRow(bankName = '', bankAmount = '') {
+  const container = document.getElementById("history-banks-rows-container");
+  if (!container) return;
+
+  const row = document.createElement("div");
+  row.className = "history-bank-row";
+  row.style.cssText = "display: flex; gap: 8px; align-items: center;";
+
+  row.innerHTML = `
+    <input type="text" class="history-bank-name" placeholder="Название банка (Т-Банк, Альфа...)" value="${bankName}" style="flex: 2; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 13px; outline: none;">
+    <input type="number" class="history-bank-amount" placeholder="Сумма ₽" value="${bankAmount}" min="0" step="1" style="flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 13px; outline: none;">
+    <button type="button" class="btn-icon btn-remove-bank-row" title="Удалить строку" style="width: 32px; height: 32px; flex-shrink: 0; color: var(--text-secondary); border-radius: 8px; border: 1px solid var(--border-color); background: transparent;">&times;</button>
+  `;
+
+  const amountInput = row.querySelector(".history-bank-amount");
+  amountInput.oninput = updateHistoryTotalFromRows;
+
+  const removeBtn = row.querySelector(".btn-remove-bank-row");
+  removeBtn.onclick = () => {
+    row.remove();
+    updateHistoryTotalFromRows();
+  };
+
+  container.appendChild(row);
+}
+
+// Автоподсчет общей суммы кешбэка из строк банков в модалке
+function updateHistoryTotalFromRows() {
+  const amountInputs = document.querySelectorAll("#history-banks-rows-container .history-bank-amount");
+  let sum = 0;
+  amountInputs.forEach(inp => {
+    sum += Number(inp.value) || 0;
+  });
+  if (sum > 0) {
+    document.getElementById("history-entry-amount").value = sum;
+  }
+}
+
 // Открытие модалки добавления/редактирования записи кешбэка за прошлый месяц
 function openHistoryEntryModal(historyId = null) {
   const form = document.getElementById("history-entry-form");
   const titleEl = document.getElementById("history-entry-modal-title");
   const deleteBtn = document.getElementById("btn-delete-history-entry");
-  if (!form) return;
+  const rowsContainer = document.getElementById("history-banks-rows-container");
+  if (!form || !rowsContainer) return;
 
   form.reset();
+  rowsContainer.innerHTML = "";
   document.getElementById("history-entry-id").value = "";
 
   if (historyId) {
@@ -3099,7 +3215,17 @@ function openHistoryEntryModal(historyId = null) {
       document.getElementById("history-entry-id").value = entry.id;
       document.getElementById("history-entry-month").value = entry.monthKey || "";
       document.getElementById("history-entry-amount").value = entry.totalCashback || 0;
-      document.getElementById("history-entry-note").value = entry.note || "";
+
+      if (Array.isArray(entry.byBank) && entry.byBank.length > 0) {
+        entry.byBank.forEach(b => addHistoryBankRow(b.bank, b.amount));
+      } else if (entry.byCard && Object.keys(entry.byCard).length > 0) {
+        Object.values(entry.byCard).forEach(c => {
+          if (c && c.amount > 0) addHistoryBankRow(c.bank || c.name, c.amount);
+        });
+      } else {
+        addHistoryBankRow("", entry.totalCashback || "");
+      }
+
       if (titleEl) titleEl.textContent = `Редактировать — ${entry.label}`;
       if (deleteBtn) deleteBtn.style.display = "block";
     }
@@ -3109,6 +3235,14 @@ function openHistoryEntryModal(historyId = null) {
     const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const prevMonthKey = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
     document.getElementById("history-entry-month").value = prevMonthKey;
+
+    // Предзаполняем популярные/активные банки пользователя для удобства
+    const uniqueBanks = [...new Set(state.cards.map(c => c.bank || c.name).filter(Boolean))];
+    if (uniqueBanks.length > 0) {
+      uniqueBanks.forEach(b => addHistoryBankRow(b, ""));
+    } else {
+      addHistoryBankRow("", "");
+    }
 
     if (titleEl) titleEl.textContent = "Внести кешбэк за прошлый месяц";
     if (deleteBtn) deleteBtn.style.display = "none";
@@ -3123,40 +3257,64 @@ function saveHistoryEntry(e) {
 
   const id = document.getElementById("history-entry-id").value;
   const monthKey = document.getElementById("history-entry-month").value; // "YYYY-MM"
-  const amount = Number(document.getElementById("history-entry-amount").value) || 0;
-  const note = document.getElementById("history-entry-note").value.trim();
+  const manualTotal = Number(document.getElementById("history-entry-amount").value) || 0;
 
   if (!monthKey) return;
+
+  const rows = document.querySelectorAll("#history-banks-rows-container .history-bank-row");
+  const byBank = [];
+  let rowsSum = 0;
+
+  rows.forEach(r => {
+    const bankInput = r.querySelector(".history-bank-name");
+    const amountInput = r.querySelector(".history-bank-amount");
+    const bankName = bankInput ? bankInput.value.trim() : "";
+    const bankAmt = amountInput ? (Number(amountInput.value) || 0) : 0;
+
+    if (bankName || bankAmt > 0) {
+      byBank.push({ bank: bankName || "Банк", amount: bankAmt });
+      rowsSum += bankAmt;
+    }
+  });
+
+  const totalCashback = rowsSum > 0 ? rowsSum : manualTotal;
 
   const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
   const [yearStr, monthStr] = monthKey.split('-');
   const monthIdx = parseInt(monthStr, 10) - 1;
   const label = `${monthNames[monthIdx]} ${yearStr}`;
 
+  const byCardObj = {};
+  byBank.forEach((item, i) => {
+    byCardObj[`b_${i}`] = { name: item.bank, bank: item.bank, amount: item.amount };
+  });
+
   if (id) {
     const entry = state.cashbackHistory.find(h => h.id === id);
     if (entry) {
       entry.monthKey = monthKey;
       entry.label = label;
-      entry.totalCashback = amount;
-      entry.note = note;
+      entry.totalCashback = totalCashback;
+      entry.byBank = byBank;
+      entry.byCard = byCardObj;
       entry.timestamp = Date.now();
     }
   } else {
     const existingIdx = state.cashbackHistory.findIndex(h => h.monthKey === monthKey);
     if (existingIdx >= 0) {
-      state.cashbackHistory[existingIdx].totalCashback = amount;
+      state.cashbackHistory[existingIdx].totalCashback = totalCashback;
       state.cashbackHistory[existingIdx].label = label;
-      state.cashbackHistory[existingIdx].note = note;
+      state.cashbackHistory[existingIdx].byBank = byBank;
+      state.cashbackHistory[existingIdx].byCard = byCardObj;
       state.cashbackHistory[existingIdx].timestamp = Date.now();
     } else {
       state.cashbackHistory.push({
         id: Date.now().toString(),
         monthKey,
         label,
-        totalCashback: amount,
-        note,
-        byCard: note ? { noteCard: { name: note, amount } } : {},
+        totalCashback,
+        byBank,
+        byCard: byCardObj,
         timestamp: Date.now()
       });
     }
@@ -3207,6 +3365,12 @@ function setupAnalyticsEventListeners() {
   const addHistoryBtn = document.getElementById("btn-add-history-entry");
   if (addHistoryBtn) {
     addHistoryBtn.onclick = () => openHistoryEntryModal();
+  }
+
+  // Кнопка добавления строки банка в форме истории
+  const addBankRowBtn = document.getElementById("btn-add-history-bank-row");
+  if (addBankRowBtn) {
+    addBankRowBtn.onclick = () => addHistoryBankRow();
   }
 
   // Модалка ручного внесения истории кешбэка

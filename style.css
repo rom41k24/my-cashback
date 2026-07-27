@@ -2220,3 +2220,51 @@ input:checked + .slider:before {
   border-radius: 6px;
 }
 
+/* Список разбивки кешбэка по банкам */
+.banks-breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bank-breakdown-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+.bank-breakdown-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.bank-breakdown-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.bank-breakdown-amount {
+  font-size: 13px;
+  font-weight: 700;
+  color: #30d158;
+}
+
+.bank-breakdown-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.bank-breakdown-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1 0%, #0a84ff 100%);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
