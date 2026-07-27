@@ -3106,6 +3106,22 @@ function renderCashbackHistoryList() {
   container.innerHTML = html;
 }
 
+// Нормализация наименования банка для единой группировки
+function normalizeBankName(bankStr) {
+  if (!bankStr) return "Прочие";
+  const str = bankStr.trim();
+  const lower = str.toLowerCase();
+
+  if (lower.includes("мтс")) return "МТС";
+  if (lower.includes("тиньк") || lower.includes("тинек") || lower.includes("т-банк") || lower.includes("т банк") || lower === "т") return "Т-Банк";
+  if (lower.includes("альфа")) return "Альфа";
+  if (lower.includes("яндекс")) return "Яндекс Пэй";
+  if (lower.includes("сбер")) return "Сбер";
+  if (lower.includes("втб")) return "ВТБ";
+
+  return str;
+}
+
 // Отрисовка разбивки кешбэка по банкам
 function renderBanksBreakdown(monthKeys, period) {
   const container = document.getElementById("banks-breakdown-container");
@@ -3119,19 +3135,19 @@ function renderBanksBreakdown(monthKeys, period) {
       if (Array.isArray(h.byBank) && h.byBank.length > 0) {
         h.byBank.forEach(b => {
           if (b && b.bank && Number(b.amount) > 0) {
-            const bName = b.bank.trim();
+            const bName = normalizeBankName(b.bank);
             bankTotals[bName] = (bankTotals[bName] || 0) + Number(b.amount);
           }
         });
       } else if (h.byCard && Object.keys(h.byCard).length > 0) {
         Object.values(h.byCard).forEach(c => {
           if (c && c.amount > 0) {
-            const bName = (c.bank || c.name || "Прочие").trim();
+            const bName = normalizeBankName(c.bank || c.name);
             bankTotals[bName] = (bankTotals[bName] || 0) + Number(c.amount);
           }
         });
       } else if (h.totalCashback > 0) {
-        const bName = (h.note || "Прочие").trim();
+        const bName = normalizeBankName(h.note);
         bankTotals[bName] = (bankTotals[bName] || 0) + Number(h.totalCashback);
       }
     }
@@ -3142,7 +3158,7 @@ function renderBanksBreakdown(monthKeys, period) {
     state.cards.forEach(c => {
       const amt = Number(c.accumulated) || 0;
       if (amt > 0) {
-        const bName = (c.bank || c.name || "Карта").trim();
+        const bName = normalizeBankName(c.bank || c.name);
         bankTotals[bName] = (bankTotals[bName] || 0) + amt;
       }
     });
@@ -3188,7 +3204,7 @@ function addHistoryBankRow(bankName = '', bankAmount = '') {
   row.style.cssText = "display: flex; gap: 8px; align-items: center;";
 
   row.innerHTML = `
-    <input type="text" class="history-bank-name" placeholder="Название банка (Т-Банк, Альфа...)" value="${bankName}" style="flex: 2; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 13px; outline: none;">
+    <input type="text" class="history-bank-name" placeholder="Название банка (Т-Банк, Альфа, МТС...)" value="${bankName}" style="flex: 2; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 13px; outline: none;">
     <input type="number" class="history-bank-amount" placeholder="Сумма ₽" value="${bankAmount}" min="0" step="1" style="flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 13px; outline: none;">
     <button type="button" class="btn-icon btn-remove-bank-row" title="Удалить строку" style="width: 32px; height: 32px; flex-shrink: 0; color: var(--text-secondary); border-radius: 8px; border: 1px solid var(--border-color); background: transparent;">&times;</button>
   `;
@@ -3256,8 +3272,8 @@ function openHistoryEntryModal(historyId = null) {
     const prevMonthKey = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
     document.getElementById("history-entry-month").value = prevMonthKey;
 
-    // Предзаполняем популярные/активные банки пользователя для удобства
-    const uniqueBanks = [...new Set(state.cards.map(c => c.bank || c.name).filter(Boolean))];
+    // Предзаполняем уникальные банки пользователя для удобства
+    const uniqueBanks = [...new Set(state.cards.map(c => normalizeBankName(c.bank || c.name)).filter(Boolean))];
     if (uniqueBanks.length > 0) {
       uniqueBanks.forEach(b => addHistoryBankRow(b, ""));
     } else {
