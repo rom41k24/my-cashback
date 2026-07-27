@@ -392,6 +392,9 @@ let state = {
   cards: [],
   subscriptions: [],
   payments: [],
+  cashbackHistory: [], // [{ id, monthKey, label, totalCashback, byCard, timestamp }]
+  deposits: [], // [{ id, bank, name, amount, rate, payoutDay, calcType, history }]
+  analyticsPeriod: 'month', // 'month', '3months', '6months', 'all'
   activeTab: "cashback-screen",
   sortMode: "date-asc", // Сортировка подписок: date-asc, date-desc, cost-asc, cost-desc
   userSynonyms: {} // Пользовательские синонимы, связанные вручную
@@ -478,11 +481,15 @@ function initApp() {
   const storedSubs = localStorage.getItem("cashback_subs");
   const storedPayments = localStorage.getItem("cashback_payments");
   const storedUserSynonyms = localStorage.getItem("cashback_user_synonyms");
+  const storedHistory = localStorage.getItem("cashback_history");
+  const storedDeposits = localStorage.getItem("cashback_deposits");
 
   state.cards = storedCards ? JSON.parse(storedCards) : DEFAULT_CARDS;
   state.subscriptions = storedSubs ? JSON.parse(storedSubs) : DEFAULT_SUBSCRIPTIONS;
   state.payments = storedPayments ? JSON.parse(storedPayments) : DEFAULT_PAYMENTS;
   state.userSynonyms = storedUserSynonyms ? JSON.parse(storedUserSynonyms) : {};
+  state.cashbackHistory = storedHistory ? JSON.parse(storedHistory) : [];
+  state.deposits = storedDeposits ? JSON.parse(storedDeposits) : [];
   state.sortMode = localStorage.getItem("sub_sort_mode") || "date-asc";
 
   // Запуск миграции для локально загруженных карт (выполняется только один раз для версии v4)
@@ -502,6 +509,7 @@ function initApp() {
   renderCards();
   renderSubscriptions();
   renderPayments();
+  renderAnalytics();
   setupEventListeners();
 }
 
@@ -2149,7 +2157,7 @@ function updateSyncIndicator(status) {
 // Функция-обертка для сохранения данных с авто-синхронизацией
 function saveState(key, value) {
   localStorage.setItem(key, value);
-  if (!isSyncing && ["cashback_cards", "cashback_subs", "cashback_payments", "cashback_user_synonyms"].includes(key)) {
+  if (!isSyncing && ["cashback_cards", "cashback_subs", "cashback_payments", "cashback_user_synonyms", "cashback_history", "cashback_deposits"].includes(key)) {
     pushDataToCloud();
   }
 }
@@ -2165,7 +2173,9 @@ async function pushDataToCloud() {
     cashback_cards: JSON.parse(localStorage.getItem("cashback_cards") || "[]"),
     cashback_subs: JSON.parse(localStorage.getItem("cashback_subs") || "[]"),
     cashback_payments: JSON.parse(localStorage.getItem("cashback_payments") || "[]"),
-    cashback_user_synonyms: JSON.parse(localStorage.getItem("cashback_user_synonyms") || "{}")
+    cashback_user_synonyms: JSON.parse(localStorage.getItem("cashback_user_synonyms") || "{}"),
+    cashback_history: JSON.parse(localStorage.getItem("cashback_history") || "[]"),
+    cashback_deposits: JSON.parse(localStorage.getItem("cashback_deposits") || "[]")
   };
 
   try {
@@ -2234,6 +2244,14 @@ async function pullDataFromCloud(key) {
         localStorage.setItem("cashback_user_synonyms", JSON.stringify(data.cashback_user_synonyms));
         state.userSynonyms = data.cashback_user_synonyms;
       }
+      if (data.cashback_history) {
+        localStorage.setItem("cashback_history", JSON.stringify(data.cashback_history));
+        state.cashbackHistory = data.cashback_history;
+      }
+      if (data.cashback_deposits) {
+        localStorage.setItem("cashback_deposits", JSON.stringify(data.cashback_deposits));
+        state.deposits = data.cashback_deposits;
+      }
       
       isSyncing = false;
       
@@ -2241,6 +2259,7 @@ async function pullDataFromCloud(key) {
       renderCards();
       renderSubscriptions();
       renderPayments();
+      renderAnalytics();
       updateMonthTitle();
       
       updateSyncIndicator("synced");
@@ -2460,7 +2479,9 @@ function setupEventListeners() {
         cashback_cards: JSON.parse(localStorage.getItem("cashback_cards") || "[]"),
         cashback_subs: JSON.parse(localStorage.getItem("cashback_subs") || "[]"),
         cashback_payments: JSON.parse(localStorage.getItem("cashback_payments") || "[]"),
-        cashback_user_synonyms: JSON.parse(localStorage.getItem("cashback_user_synonyms") || "{}")
+        cashback_user_synonyms: JSON.parse(localStorage.getItem("cashback_user_synonyms") || "{}"),
+        cashback_history: JSON.parse(localStorage.getItem("cashback_history") || "[]"),
+        cashback_deposits: JSON.parse(localStorage.getItem("cashback_deposits") || "[]")
       };
       
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -2504,6 +2525,12 @@ function setupEventListeners() {
           if (data.cashback_user_synonyms) {
             localStorage.setItem("cashback_user_synonyms", JSON.stringify(data.cashback_user_synonyms));
           }
+          if (data.cashback_history) {
+            localStorage.setItem("cashback_history", JSON.stringify(data.cashback_history));
+          }
+          if (data.cashback_deposits) {
+            localStorage.setItem("cashback_deposits", JSON.stringify(data.cashback_deposits));
+          }
           
           const statusMsg = document.getElementById("settings-status-msg");
           if (statusMsg) {
@@ -2544,6 +2571,566 @@ function setupEventListeners() {
 
   // Инициализация интерфейса синхронизации
   initSyncUI();
+
+  // Инициализация интерфейса аналитики и вкладов
+  setupAnalyticsEventListeners();
+}
+
+// -------------------------------------------------------------
+// Аналитика, История кешбэка и Учёт вкладов
+// -------------------------------------------------------------
+
+// Открытие модалки завершения месяца
+function openCloseMonthModal() {
+  const summaryContainer = document.getElementById("close-month-cards-summary");
+  if (!summaryContainer) return;
+
+  const totalCashback = state.cards.reduce((sum, c) => sum + (Number(c.accumulated) || 0), 0);
+  
+  if (state.cards.length === 0) {
+    summaryContainer.innerHTML = `<p style="color: var(--text-secondary); text-align: center;">У вас нет добавленных карт</p>`;
+  } else {
+    let cardsHtml = state.cards.map(c => `
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px dashed rgba(255,255,255,0.06); font-size: 13px;">
+        <span style="color: var(--text-primary); font-weight: 500;">${c.bank ? c.bank + ' — ' : ''}${c.name}</span>
+        <strong style="color: var(--accent-color);">${(Number(c.accumulated) || 0).toLocaleString('ru-RU')} ₽</strong>
+      </div>
+    `).join('');
+
+    cardsHtml += `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 6px; font-weight: 700; font-size: 14px;">
+        <span>Итого за месяц:</span>
+        <span style="color: #30d158; font-size: 16px;">${totalCashback.toLocaleString('ru-RU')} ₽</span>
+      </div>
+    `;
+    summaryContainer.innerHTML = cardsHtml;
+  }
+
+  openModal("close-month-modal");
+}
+
+// Завершение текущего месяца и сохранение итогов
+function confirmCloseMonth() {
+  const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+  const now = new Date();
+  const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const label = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+  let totalCashback = 0;
+  const byCard = {};
+  
+  state.cards.forEach(c => {
+    const amt = Number(c.accumulated) || 0;
+    byCard[c.id] = { name: c.name, bank: c.bank, amount: amt };
+    totalCashback += amt;
+    c.accumulated = 0; // Сброс накопительного кешбэка по карте для нового месяца
+  });
+
+  const existingIdx = state.cashbackHistory.findIndex(h => h.monthKey === monthKey);
+  if (existingIdx >= 0) {
+    state.cashbackHistory[existingIdx].totalCashback += totalCashback;
+    state.cashbackHistory[existingIdx].byCard = { ...state.cashbackHistory[existingIdx].byCard, ...byCard };
+    state.cashbackHistory[existingIdx].timestamp = Date.now();
+  } else {
+    state.cashbackHistory.unshift({
+      id: Date.now().toString(),
+      monthKey,
+      label,
+      totalCashback,
+      byCard,
+      timestamp: Date.now()
+    });
+  }
+
+  saveState("cashback_history", JSON.stringify(state.cashbackHistory));
+  saveState("cashback_cards", JSON.stringify(state.cards));
+
+  closeModal("close-month-modal");
+  renderCards();
+  updateMonthTitle();
+  renderAnalytics();
+}
+
+// Открытие модалки добавления/редактирования вклада
+function openDepositModal(depositId = null) {
+  const form = document.getElementById("deposit-form");
+  const titleEl = document.getElementById("deposit-modal-title");
+  const deleteBtn = document.getElementById("btn-delete-deposit");
+  if (!form) return;
+
+  form.reset();
+  document.getElementById("deposit-id").value = "";
+
+  if (depositId) {
+    const deposit = state.deposits.find(d => d.id === depositId);
+    if (deposit) {
+      document.getElementById("deposit-id").value = deposit.id;
+      document.getElementById("deposit-bank").value = deposit.bank || "";
+      document.getElementById("deposit-name").value = deposit.name || "";
+      document.getElementById("deposit-amount").value = deposit.amount || 0;
+      document.getElementById("deposit-rate").value = deposit.rate || 0;
+      document.getElementById("deposit-payout-day").value = deposit.payoutDay || 1;
+      document.getElementById("deposit-calc-type").value = deposit.calcType || "auto";
+
+      if (titleEl) titleEl.textContent = "Редактировать вклад";
+      if (deleteBtn) deleteBtn.style.display = "block";
+    }
+  } else {
+    if (titleEl) titleEl.textContent = "Добавить вклад";
+    if (deleteBtn) deleteBtn.style.display = "none";
+  }
+
+  openModal("deposit-modal");
+}
+
+// Сохранение вклада
+function saveDeposit(e) {
+  if (e) e.preventDefault();
+  
+  const id = document.getElementById("deposit-id").value;
+  const bank = document.getElementById("deposit-bank").value.trim();
+  const name = document.getElementById("deposit-name").value.trim();
+  const amount = Number(document.getElementById("deposit-amount").value) || 0;
+  const rate = Number(document.getElementById("deposit-rate").value) || 0;
+  const payoutDay = Number(document.getElementById("deposit-payout-day").value) || 1;
+  const calcType = document.getElementById("deposit-calc-type").value || "auto";
+
+  if (!bank || !name) return;
+
+  if (id) {
+    const deposit = state.deposits.find(d => d.id === id);
+    if (deposit) {
+      deposit.bank = bank;
+      deposit.name = name;
+      deposit.amount = amount;
+      deposit.rate = rate;
+      deposit.payoutDay = payoutDay;
+      deposit.calcType = calcType;
+    }
+  } else {
+    state.deposits.push({
+      id: Date.now().toString(),
+      bank,
+      name,
+      amount,
+      rate,
+      payoutDay,
+      calcType,
+      history: []
+    });
+  }
+
+  saveState("cashback_deposits", JSON.stringify(state.deposits));
+  closeModal("deposit-modal");
+  renderAnalytics();
+}
+
+// Удаление вклада
+function deleteDeposit() {
+  const id = document.getElementById("deposit-id").value;
+  if (!id) return;
+
+  if (confirm("Вы уверены, что хотите удалить этот вклад?")) {
+    state.deposits = state.deposits.filter(d => d.id !== id);
+    saveState("cashback_deposits", JSON.stringify(state.deposits));
+    closeModal("deposit-modal");
+    renderAnalytics();
+  }
+}
+
+// Открытие модалки выплаты или изменения баланса вклада
+function openDepositActionModal(depositId, mode = "payout") {
+  const form = document.getElementById("deposit-action-form");
+  if (!form) return;
+
+  form.reset();
+  document.getElementById("deposit-action-id").value = depositId;
+  document.getElementById("deposit-action-mode").value = mode;
+
+  const deposit = state.deposits.find(d => d.id === depositId);
+  if (!deposit) return;
+
+  const titleEl = document.getElementById("deposit-action-modal-title");
+  const payoutFields = document.getElementById("deposit-action-payout-fields");
+  const balanceFields = document.getElementById("deposit-action-balance-fields");
+  const hintEl = document.getElementById("deposit-action-calc-hint");
+
+  const now = new Date();
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+  if (mode === "payout") {
+    if (titleEl) titleEl.textContent = `Выплата — ${deposit.name}`;
+    if (payoutFields) payoutFields.style.display = "block";
+    if (balanceFields) balanceFields.style.display = "none";
+
+    const expectedMonthly = Math.round((deposit.amount * (deposit.rate / 100)) / 12);
+    document.getElementById("deposit-action-amount").value = expectedMonthly;
+    document.getElementById("deposit-action-month").value = currentMonthKey;
+    if (hintEl) hintEl.textContent = `Авторасчёт по ставке ${deposit.rate}%: ${expectedMonthly.toLocaleString('ru-RU')} ₽`;
+  } else {
+    if (titleEl) titleEl.textContent = `Баланс — ${deposit.name}`;
+    if (payoutFields) payoutFields.style.display = "none";
+    if (balanceFields) balanceFields.style.display = "block";
+
+    document.getElementById("deposit-new-balance").value = deposit.amount;
+  }
+
+  openModal("deposit-action-modal");
+}
+
+// Сохранение действия с вкладом (выплата или новый баланс)
+function saveDepositAction(e) {
+  if (e) e.preventDefault();
+
+  const depositId = document.getElementById("deposit-action-id").value;
+  const mode = document.getElementById("deposit-action-mode").value;
+  const deposit = state.deposits.find(d => d.id === depositId);
+  if (!deposit) return;
+
+  if (mode === "payout") {
+    const amount = Number(document.getElementById("deposit-action-amount").value) || 0;
+    const monthKey = document.getElementById("deposit-action-month").value;
+
+    if (!monthKey) return;
+
+    deposit.history = deposit.history || [];
+    const existingIdx = deposit.history.findIndex(h => h.monthKey === monthKey);
+    if (existingIdx >= 0) {
+      deposit.history[existingIdx].amount = amount;
+      deposit.history[existingIdx].timestamp = Date.now();
+    } else {
+      deposit.history.push({
+        id: Date.now().toString(),
+        monthKey,
+        amount,
+        timestamp: Date.now()
+      });
+    }
+  } else if (mode === "balance") {
+    const newBalance = Number(document.getElementById("deposit-new-balance").value) || 0;
+    deposit.amount = newBalance;
+  }
+
+  saveState("cashback_deposits", JSON.stringify(state.deposits));
+  closeModal("deposit-action-modal");
+  renderAnalytics();
+}
+
+// Главная функция рендеринга аналитики
+function renderAnalytics() {
+  const period = state.analyticsPeriod || "month";
+  const now = new Date();
+  
+  // Генерация ключевых месяцев в зависимости от периода
+  const monthKeys = [];
+  let monthsCount = 1;
+  if (period === "month") monthsCount = 1;
+  else if (period === "3months") monthsCount = 3;
+  else if (period === "6months") monthsCount = 6;
+  else if (period === "all") monthsCount = 12;
+
+  for (let i = 0; i < monthsCount; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  }
+
+  // Расчёт кешбэка за выбранный период
+  let totalCashback = 0;
+  state.cashbackHistory.forEach(h => {
+    if (period === "all" || monthKeys.includes(h.monthKey)) {
+      totalCashback += Number(h.totalCashback) || 0;
+    }
+  });
+
+  // Добавляем текущий накопленный кешбэк по картам, если рассматриваем текущий месяц или всё время
+  const currentCardsAccumulated = state.cards.reduce((sum, c) => sum + (Number(c.accumulated) || 0), 0);
+  if (period === "month" || period === "all") {
+    totalCashback += currentCardsAccumulated;
+  }
+
+  // Расчёт выплат по вкладам
+  let totalDeposits = 0;
+  state.deposits.forEach(dep => {
+    if (Array.isArray(dep.history)) {
+      dep.history.forEach(h => {
+        if (period === "all" || monthKeys.includes(h.monthKey)) {
+          totalDeposits += Number(h.amount) || 0;
+        }
+      });
+    }
+    // Если выплат в истории ещё нет, но вклад активен, прибавляем ожидания для текущего месяца
+    if (dep.calcType === "auto" && dep.amount > 0 && dep.rate > 0) {
+      const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const hasHistoryCurrentMonth = dep.history && dep.history.some(h => h.monthKey === currentMonthKey);
+      if (!hasHistoryCurrentMonth && (period === "month" || period === "all")) {
+        totalDeposits += Math.round((dep.amount * (dep.rate / 100)) / 12);
+      }
+    }
+  });
+
+  const totalIncome = totalCashback + totalDeposits;
+
+  // Обновление цифр на дашборде
+  const totalIncomeEl = document.getElementById("analytics-total-income");
+  const cashbackTotalEl = document.getElementById("analytics-cashback-total");
+  const depositsTotalEl = document.getElementById("analytics-deposits-total");
+  const periodLabelEl = document.getElementById("analytics-period-label");
+
+  if (totalIncomeEl) totalIncomeEl.textContent = `${totalIncome.toLocaleString('ru-RU')} ₽`;
+  if (cashbackTotalEl) cashbackTotalEl.textContent = `${totalCashback.toLocaleString('ru-RU')} ₽`;
+  if (depositsTotalEl) depositsTotalEl.textContent = `${totalDeposits.toLocaleString('ru-RU')} ₽`;
+
+  if (periodLabelEl) {
+    const periodTextMap = {
+      month: "За текущий месяц",
+      "3months": "За последние 3 месяца",
+      "6months": "За последние 6 месяцев",
+      all: "За всё время учёта"
+    };
+    periodLabelEl.textContent = periodTextMap[period] || "За выбранный период";
+  }
+
+  // Рендеринг графика
+  renderAnalyticsChart(monthsCount);
+
+  // Рендеринг списка вкладов
+  renderDepositsList();
+
+  // Рендеринг истории кешбэка
+  renderCashbackHistoryList();
+}
+
+// Отрисовка столбчатой диаграммы доходов
+function renderAnalyticsChart(monthsCount = 6) {
+  const chartContainer = document.getElementById("analytics-chart-container");
+  if (!chartContainer) return;
+
+  const monthNamesShort = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
+  const now = new Date();
+
+  const chartData = [];
+  let maxMonthlyVal = 1;
+
+  for (let i = monthsCount - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const monthLabel = monthNamesShort[d.getMonth()];
+
+    // Кешбэк за этот месяц
+    let monthCashback = 0;
+    const historyItem = state.cashbackHistory.find(h => h.monthKey === monthKey);
+    if (historyItem) {
+      monthCashback = Number(historyItem.totalCashback) || 0;
+    } else if (i === 0) {
+      monthCashback = state.cards.reduce((sum, c) => sum + (Number(c.accumulated) || 0), 0);
+    }
+
+    // Вклады за этот месяц
+    let monthDeposits = 0;
+    state.deposits.forEach(dep => {
+      if (Array.isArray(dep.history)) {
+        const payout = dep.history.find(h => h.monthKey === monthKey);
+        if (payout) monthDeposits += Number(payout.amount) || 0;
+      }
+      if (i === 0 && monthDeposits === 0 && dep.calcType === "auto" && dep.amount > 0) {
+        monthDeposits += Math.round((dep.amount * (dep.rate / 100)) / 12);
+      }
+    });
+
+    const monthTotal = monthCashback + monthDeposits;
+    if (monthTotal > maxMonthlyVal) maxMonthlyVal = monthTotal;
+
+    chartData.push({
+      monthLabel,
+      monthCashback,
+      monthDeposits,
+      monthTotal
+    });
+  }
+
+  if (chartData.length === 0 || maxMonthlyVal <= 1) {
+    chartContainer.innerHTML = `
+      <div style="width: 100%; text-align: center; color: var(--text-secondary); padding: 30px 0; font-size: 13px;">
+        Нет данных для построения графика. Завершите месяц или добавьте вклад.
+      </div>
+    `;
+    return;
+  }
+
+  const chartHtml = chartData.map(item => {
+    const cashbackPct = Math.round((item.monthCashback / maxMonthlyVal) * 100);
+    const depositPct = Math.round((item.monthDeposits / maxMonthlyVal) * 100);
+    const totalHeightPct = Math.min(100, Math.max(12, Math.round((item.monthTotal / maxMonthlyVal) * 100)));
+
+    return `
+      <div class="chart-bar-group">
+        <span class="chart-bar-val">${item.monthTotal > 0 ? item.monthTotal.toLocaleString('ru-RU') + '₽' : ''}</span>
+        <div class="chart-bar-stack" style="height: ${totalHeightPct}%;">
+          ${depositPct > 0 ? `<div class="bar-segment-deposit" style="height: ${depositPct}%;" title="Вклады: ${item.monthDeposits} ₽"></div>` : ''}
+          ${cashbackPct > 0 ? `<div class="bar-segment-cashback" style="height: ${cashbackPct}%;" title="Кешбэк: ${item.monthCashback} ₽"></div>` : ''}
+        </div>
+        <span class="chart-bar-month">${item.monthLabel}</span>
+      </div>
+    `;
+  }).join('');
+
+  chartContainer.innerHTML = chartHtml;
+}
+
+// Отрисовка списка вкладов
+function renderDepositsList() {
+  const container = document.getElementById("deposits-container");
+  if (!container) return;
+
+  if (!state.deposits || state.deposits.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; color: var(--text-secondary); padding: 24px 12px; background: rgba(255,255,255,0.02); border-radius: 14px; border: 1px dashed var(--border-color);">
+        <p style="margin-bottom: 8px; font-weight: 500;">У вас пока нет активных вкладов</p>
+        <button class="btn btn-secondary" onclick="openDepositModal()" style="font-size: 12px; padding: 6px 14px;">+ Добавить первый вклад</button>
+      </div>
+    `;
+    return;
+  }
+
+  const html = state.deposits.map(d => {
+    const monthlyIncome = Math.round((d.amount * (d.rate / 100)) / 12);
+
+    return `
+      <div class="deposit-card">
+        <div class="deposit-top-row">
+          <div>
+            <span class="deposit-bank-badge">${d.bank}</span>
+            <h3 class="deposit-title">${d.name}</h3>
+          </div>
+          <button class="btn-icon" onclick="openDepositModal('${d.id}')" title="Редактировать" style="width: 32px; height: 32px;">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+          </button>
+        </div>
+
+        <div class="deposit-stats-grid">
+          <div class="deposit-stat-item">
+            <span class="deposit-stat-label">Сумма вклада</span>
+            <span class="deposit-stat-value">${Number(d.amount).toLocaleString('ru-RU')} ₽</span>
+          </div>
+          <div class="deposit-stat-item">
+            <span class="deposit-stat-label">Ставка</span>
+            <span class="deposit-stat-value" style="color: #30d158;">${d.rate}% годовых</span>
+          </div>
+          <div class="deposit-stat-item">
+            <span class="deposit-stat-label">Доход в месяц</span>
+            <span class="deposit-stat-value">~${monthlyIncome.toLocaleString('ru-RU')} ₽</span>
+          </div>
+          <div class="deposit-stat-item">
+            <span class="deposit-stat-label">Выплата</span>
+            <span class="deposit-stat-value">${d.payoutDay}-го числа</span>
+          </div>
+        </div>
+
+        <div class="deposit-card-actions">
+          <button class="btn-deposit-action btn-deposit-payout" onclick="openDepositActionModal('${d.id}', 'payout')">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Зафиксировать выплату
+          </button>
+          <button class="btn-deposit-action" onclick="openDepositActionModal('${d.id}', 'balance')">
+            ± Баланс
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = html;
+}
+
+// Отрисовка истории кешбэка по месяцах
+function renderCashbackHistoryList() {
+  const container = document.getElementById("cashback-history-container");
+  if (!container) return;
+
+  if (!state.cashbackHistory || state.cashbackHistory.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; color: var(--text-secondary); padding: 20px 12px; font-size: 13px;">
+        История кешбэка появится здесь после нажатия кнопки <strong>«Завершить месяц»</strong>.
+      </div>
+    `;
+    return;
+  }
+
+  const html = state.cashbackHistory.map(h => {
+    let cardsPills = '';
+    if (h.byCard) {
+      cardsPills = Object.values(h.byCard)
+        .filter(c => c.amount > 0)
+        .map(c => `<span class="history-card-pill">${c.bank ? c.bank + ' ' : ''}${c.name}: ${c.amount.toLocaleString('ru-RU')} ₽</span>`)
+        .join('');
+    }
+
+    return `
+      <div class="history-item">
+        <div class="history-item-header">
+          <span class="history-item-month">${h.label}</span>
+          <span class="history-item-total">+${Number(h.totalCashback).toLocaleString('ru-RU')} ₽</span>
+        </div>
+        ${cardsPills ? `<div class="history-item-cards">${cardsPills}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = html;
+}
+
+// Слушатели событий аналитики
+function setupAnalyticsEventListeners() {
+  // Кнопка открытия модалки завершения месяца
+  const openCloseMonthBtn = document.getElementById("btn-open-close-month-modal");
+  if (openCloseMonthBtn) {
+    openCloseMonthBtn.onclick = openCloseMonthModal;
+  }
+
+  // Подтверждение завершения месяца
+  const confirmCloseMonthBtn = document.getElementById("btn-confirm-close-month");
+  if (confirmCloseMonthBtn) {
+    confirmCloseMonthBtn.onclick = confirmCloseMonth;
+  }
+
+  // Закрытие модалки месяца
+  const closeMonthCloseBtn = document.getElementById("btn-close-month-modal");
+  if (closeMonthCloseBtn) {
+    closeMonthCloseBtn.onclick = () => closeModal("close-month-modal");
+  }
+
+  // Переключение периода аналитики
+  document.querySelectorAll(".period-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".period-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.analyticsPeriod = btn.getAttribute("data-period");
+      renderAnalytics();
+    });
+  });
+
+  // Кнопки добавить вклад
+  const addDepositHeaderBtn = document.getElementById("btn-add-deposit-header");
+  const addDepositLinkBtn = document.getElementById("btn-add-deposit-link");
+  if (addDepositHeaderBtn) addDepositHeaderBtn.onclick = () => openDepositModal();
+  if (addDepositLinkBtn) addDepositLinkBtn.onclick = () => openDepositModal();
+
+  // Модалка вклада
+  const closeDepositBtn = document.getElementById("btn-close-deposit-modal");
+  if (closeDepositBtn) closeDepositBtn.onclick = () => closeModal("deposit-modal");
+
+  const depositForm = document.getElementById("deposit-form");
+  if (depositForm) depositForm.onsubmit = saveDeposit;
+
+  const deleteDepositBtn = document.getElementById("btn-delete-deposit");
+  if (deleteDepositBtn) deleteDepositBtn.onclick = deleteDeposit;
+
+  // Модалка действия с вкладом (выплата / баланс)
+  const closeDepositActionBtn = document.getElementById("btn-close-deposit-action-modal");
+  if (closeDepositActionBtn) closeDepositActionBtn.onclick = () => closeModal("deposit-action-modal");
+
+  const depositActionForm = document.getElementById("deposit-action-form");
+  if (depositActionForm) depositActionForm.onsubmit = saveDepositAction;
 }
 
 // Инициализация при загрузке страницы

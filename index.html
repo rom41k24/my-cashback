@@ -70,6 +70,15 @@
         <!-- Будет заполняться динамически через JS -->
       </div>
 
+      <!-- Действия с кешбэком -->
+      <div class="cashback-actions-bar" style="display: flex; justify-content: space-between; align-items: center; margin: 12px 0 16px 0;">
+        <span class="section-title" style="font-size: 15px; font-weight: 600; color: var(--text-secondary);">Ваши карты</span>
+        <button class="btn-close-month-trigger" id="btn-open-close-month-modal" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: var(--text-primary); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          Завершить месяц
+        </button>
+      </div>
+
       <div class="cards-grid" id="cards-container">
         <!-- Карты будут сгенерированы динамически через app.js -->
       </div>
@@ -155,6 +164,92 @@
       </button>
     </section>
 
+    <!-- Экран 4: Аналитика и Вклады -->
+    <section id="analytics-screen" class="screen">
+      <header class="screen-header header-with-action">
+        <div>
+          <h1>Аналитика & Вклады</h1>
+          <p class="subtitle">Доход со вкладов и история кешбэка</p>
+        </div>
+        <button class="btn-icon" id="btn-add-deposit-header" aria-label="Добавить вклад" title="Добавить вклад">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+      </header>
+
+      <!-- Переключатель периодов -->
+      <div class="period-selector-wrapper">
+        <div class="period-selector">
+          <button class="period-btn active" data-period="month">Месяц</button>
+          <button class="period-btn" data-period="3months">3 мес</button>
+          <button class="period-btn" data-period="6months">6 мес</button>
+          <button class="period-btn" data-period="all">Всё время</button>
+        </div>
+      </div>
+
+      <!-- Сводный Дашборд Доходов -->
+      <div class="analytics-dashboard-card">
+        <div class="dashboard-total-group">
+          <span class="dashboard-label">Пассивный доход</span>
+          <div class="dashboard-total-val" id="analytics-total-income">0 ₽</div>
+          <span class="dashboard-sub-period" id="analytics-period-label">За текущий месяц</span>
+        </div>
+        <div class="dashboard-breakdown-row">
+          <div class="dashboard-breakdown-item">
+            <div class="breakdown-icon cashback-bg">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.2" fill="none"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+            </div>
+            <div>
+              <span class="breakdown-label">Кешбэк</span>
+              <span class="breakdown-val" id="analytics-cashback-total">0 ₽</span>
+            </div>
+          </div>
+          <div class="dashboard-breakdown-item">
+            <div class="breakdown-icon deposit-bg">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.2" fill="none"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            </div>
+            <div>
+              <span class="breakdown-label">Вклады</span>
+              <span class="breakdown-val" id="analytics-deposits-total">0 ₽</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Диаграмма динамики -->
+      <div class="analytics-block">
+        <div class="analytics-block-header">
+          <span class="section-title">Динамика по месяцах</span>
+        </div>
+        <div class="chart-wrapper" id="analytics-chart-container">
+          <!-- Генерируется через JS -->
+        </div>
+      </div>
+
+      <!-- Вклады и накопительные счета -->
+      <div class="analytics-block">
+        <div class="analytics-block-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <span class="section-title">Вклады и счета</span>
+          <button class="btn-text-link" id="btn-add-deposit-link">+ Добавить вклад</button>
+        </div>
+        <div class="deposits-list" id="deposits-container">
+          <!-- Генерируется через JS -->
+        </div>
+      </div>
+
+      <!-- История кешбэка -->
+      <div class="analytics-block">
+        <div class="analytics-block-header">
+          <span class="section-title">История сохранённого кешбэка</span>
+        </div>
+        <div class="cashback-history-list" id="cashback-history-container">
+          <!-- Генерируется через JS -->
+        </div>
+      </div>
+    </section>
+
     <!-- Нижняя панель навигации -->
     <nav class="bottom-nav">
       <button class="nav-item active" data-screen="cashback-screen">
@@ -180,6 +275,14 @@
           <line x1="12" y1="11" x2="12" y2="13"></line>
         </svg>
         <span>Платежи</span>
+      </button>
+      <button class="nav-item" data-screen="analytics-screen">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        <span>Аналитика</span>
       </button>
     </nav>
 
@@ -490,6 +593,123 @@
         </div>
         
         <div id="settings-status-msg" style="font-size: 13px; text-align: center; display: none; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); margin-top: 16px; line-height: 1.4;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно: Завершить месяц -->
+  <div class="modal" id="close-month-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="close-month-modal-title">Завершить месяц</h2>
+        <button class="btn-close" id="btn-close-month-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 13px; line-height: 1.5;">
+          Накопленный кешбэк сохранится в историю и аналитику, а счётчики по картам обнулятся для работы в новом месяце.
+        </p>
+        <div class="close-month-summary" id="close-month-cards-summary" style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 14px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.08);">
+          <!-- Итоги по картам -->
+        </div>
+        <button type="button" class="btn btn-primary" id="btn-confirm-close-month" style="width: 100%; justify-content: center; height: 44px; font-size: 14px;">
+          Зафиксировать и начать новый месяц
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно: Добавить / Редактировать вклад -->
+  <div class="modal" id="deposit-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="deposit-modal-title">Добавить вклад</h2>
+        <button class="btn-close" id="btn-close-deposit-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="deposit-form">
+          <input type="hidden" id="deposit-id">
+          
+          <div class="form-group">
+            <label for="deposit-bank">Название банка</label>
+            <input type="text" id="deposit-bank" placeholder="Например: Т-Банк, Сбер, Альфа" required>
+          </div>
+
+          <div class="form-group">
+            <label for="deposit-name">Название вклада или счёта</label>
+            <input type="text" id="deposit-name" placeholder="Например: Накопительный 18%" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="deposit-amount">Сумма вклада (₽)</label>
+              <input type="number" id="deposit-amount" placeholder="100000" min="0" step="1000" required>
+            </div>
+            <div class="form-group">
+              <label for="deposit-rate">Ставка (% годовых)</label>
+              <input type="number" id="deposit-rate" placeholder="18.5" min="0" step="0.1" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="deposit-payout-day">День выплаты</label>
+              <input type="number" id="deposit-payout-day" placeholder="1-31" min="1" max="31" value="1">
+            </div>
+            <div class="form-group">
+              <label for="deposit-calc-type">Расчёт выплат</label>
+              <select id="deposit-calc-type" style="padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-primary); outline: none; font-size: 13px; width: 100%;">
+                <option value="auto">Авто (% / 12)</option>
+                <option value="manual">Только вручную</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button type="button" class="btn btn-danger" id="btn-delete-deposit" style="display: none; flex: 1; justify-content: center; height: 42px; font-size: 13px;">Удалить</button>
+            <button type="submit" class="btn btn-primary" style="flex: 2; justify-content: center; height: 42px; font-size: 13px;">Сохранить</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно: Зафиксировать выплату / пополнить / снять -->
+  <div class="modal" id="deposit-action-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="deposit-action-modal-title">Выплата процентов</h2>
+        <button class="btn-close" id="btn-close-deposit-action-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="deposit-action-form">
+          <input type="hidden" id="deposit-action-id">
+          <input type="hidden" id="deposit-action-mode" value="payout">
+
+          <div id="deposit-action-payout-fields">
+            <div class="form-group">
+              <label for="deposit-action-amount">Сумма полученных процентов (₽)</label>
+              <input type="number" id="deposit-action-amount" placeholder="0" min="0" step="1">
+              <small style="color: var(--text-secondary); display: block; margin-top: 4px;" id="deposit-action-calc-hint">Авторасчёт: 0 ₽</small>
+            </div>
+            <div class="form-group">
+              <label for="deposit-action-month">Период (месяц и год)</label>
+              <input type="month" id="deposit-action-month" required style="padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-primary); outline: none; font-size: 13px; width: 100%;">
+            </div>
+          </div>
+
+          <div id="deposit-action-balance-fields" style="display: none;">
+            <div class="form-group">
+              <label for="deposit-new-balance">Новый размер вклада / счёта (₽)</label>
+              <input type="number" id="deposit-new-balance" placeholder="0" min="0" step="1000">
+              <small style="color: var(--text-secondary); display: block; margin-top: 4px;">Укажите новую сумму после пополнения или частичного снятия</small>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; height: 44px; margin-top: 16px; font-size: 14px;">Сохранить</button>
+        </form>
       </div>
     </div>
   </div>

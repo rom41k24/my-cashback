@@ -1856,3 +1856,367 @@ input:checked + .slider:before {
   transform: scale(0.94);
 }
 
+/* ================= ================= ================= */
+/* Стили экрана Аналитики, Вкладов и Истории кешбэка */
+/* ================= ================= ================= */
+
+.period-selector-wrapper {
+  margin-bottom: 16px;
+}
+
+.period-selector {
+  display: flex;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.period-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 8px 0;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.period-btn.active {
+  background: var(--accent-color);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3);
+}
+
+.analytics-dashboard-card {
+  background: linear-gradient(135deg, rgba(30, 30, 36, 0.9) 0%, rgba(20, 20, 26, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+}
+
+.dashboard-total-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 16px;
+}
+
+.dashboard-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+}
+
+.dashboard-total-val {
+  font-family: var(--font-title);
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 6px 0;
+  background: linear-gradient(135deg, #ffffff 30%, #a0c8ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dashboard-sub-period {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.dashboard-breakdown-row {
+  display: flex;
+  gap: 12px;
+}
+
+.dashboard-breakdown-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.breakdown-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.breakdown-icon.cashback-bg {
+  background: rgba(10, 132, 255, 0.15);
+  color: #0a84ff;
+}
+
+.breakdown-icon.deposit-bg {
+  background: rgba(48, 209, 88, 0.15);
+  color: #30d158;
+}
+
+.breakdown-label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.breakdown-val {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.analytics-block {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.analytics-block-header {
+  margin-bottom: 14px;
+}
+
+.btn-text-link {
+  background: none;
+  border: none;
+  color: var(--accent-color);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Столбчатая диаграмма */
+.chart-wrapper {
+  min-height: 150px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 20px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.chart-bar-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  height: 130px;
+  justify-content: flex-end;
+}
+
+.chart-bar-stack {
+  width: 100%;
+  max-width: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  position: relative;
+  transition: height 0.3s ease;
+}
+
+.bar-segment-cashback {
+  background: linear-gradient(180deg, #0a84ff 0%, #0056b3 100%);
+  width: 100%;
+  transition: height 0.3s ease;
+}
+
+.bar-segment-deposit {
+  background: linear-gradient(180deg, #30d158 0%, #1e8337 100%);
+  width: 100%;
+  transition: height 0.3s ease;
+}
+
+.chart-bar-val {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.chart-bar-month {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* Карточки вкладов */
+.deposits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.deposit-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 14px;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.deposit-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.deposit-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.deposit-bank-badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #30d158;
+  background: rgba(48, 209, 88, 0.12);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.deposit-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 4px;
+}
+
+.deposit-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.deposit-stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.deposit-stat-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.deposit-stat-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.deposit-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-deposit-action {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-deposit-action:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-deposit-payout {
+  background: rgba(48, 209, 88, 0.15);
+  border-color: rgba(48, 209, 88, 0.3);
+  color: #30d158;
+}
+
+.btn-deposit-payout:hover {
+  background: rgba(48, 209, 88, 0.25);
+}
+
+/* Элементы истории кешбэка */
+.cashback-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.history-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.history-item-month {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.history-item-total {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--accent-color);
+}
+
+.history-item-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.06);
+}
+
+.history-card-pill {
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
