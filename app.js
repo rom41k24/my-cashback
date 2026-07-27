@@ -3050,7 +3050,7 @@ function renderCashbackHistoryList() {
   if (!state.cashbackHistory || state.cashbackHistory.length === 0) {
     container.innerHTML = `
       <div style="text-align: center; color: var(--text-secondary); padding: 20px 12px; font-size: 13px;">
-        История кешбэка появится здесь после нажатия кнопки <strong>«Завершить месяц»</strong>.
+        История кешбэка пуста. Нажмите <strong>«+ Прошлый месяц»</strong> выше или <strong>«Завершить месяц»</strong> на главном экране.
       </div>
     `;
     return;
@@ -3058,18 +3058,23 @@ function renderCashbackHistoryList() {
 
   const html = state.cashbackHistory.map(h => {
     let cardsPills = '';
-    if (h.byCard) {
+    if (h.byCard && Object.keys(h.byCard).length > 0) {
       cardsPills = Object.values(h.byCard)
-        .filter(c => c.amount > 0)
+        .filter(c => c && c.amount > 0)
         .map(c => `<span class="history-card-pill">${c.bank ? c.bank + ' ' : ''}${c.name}: ${c.amount.toLocaleString('ru-RU')} ₽</span>`)
         .join('');
+    } else if (h.note) {
+      cardsPills = `<span class="history-card-pill">${h.note}</span>`;
     }
 
     return `
-      <div class="history-item">
+      <div class="history-item" style="cursor: pointer;" onclick="openHistoryEntryModal('${h.id}')" title="Нажмите для редактирования">
         <div class="history-item-header">
           <span class="history-item-month">${h.label}</span>
-          <span class="history-item-total">+${Number(h.totalCashback).toLocaleString('ru-RU')} ₽</span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="history-item-total">+${Number(h.totalCashback).toLocaleString('ru-RU')} ₽</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" style="color: var(--text-secondary);"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+          </div>
         </div>
         ${cardsPills ? `<div class="history-item-cards">${cardsPills}</div>` : ''}
       </div>
@@ -3077,6 +3082,106 @@ function renderCashbackHistoryList() {
   }).join('');
 
   container.innerHTML = html;
+}
+
+// Открытие модалки добавления/редактирования записи кешбэка за прошлый месяц
+function openHistoryEntryModal(historyId = null) {
+  const form = document.getElementById("history-entry-form");
+  const titleEl = document.getElementById("history-entry-modal-title");
+  const deleteBtn = document.getElementById("btn-delete-history-entry");
+  if (!form) return;
+
+  form.reset();
+  document.getElementById("history-entry-id").value = "";
+
+  if (historyId) {
+    const entry = state.cashbackHistory.find(h => h.id === historyId);
+    if (entry) {
+      document.getElementById("history-entry-id").value = entry.id;
+      document.getElementById("history-entry-month").value = entry.monthKey || "";
+      document.getElementById("history-entry-amount").value = entry.totalCashback || 0;
+      document.getElementById("history-entry-note").value = entry.note || "";
+      if (titleEl) titleEl.textContent = `Редактировать — ${entry.label}`;
+      if (deleteBtn) deleteBtn.style.display = "block";
+    }
+  } else {
+    // По умолчанию прошлый месяц
+    const now = new Date();
+    const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const prevMonthKey = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
+    document.getElementById("history-entry-month").value = prevMonthKey;
+
+    if (titleEl) titleEl.textContent = "Внести кешбэк за прошлый месяц";
+    if (deleteBtn) deleteBtn.style.display = "none";
+  }
+
+  openModal("history-entry-modal");
+}
+
+// Сохранение записи кешбэка за прошлый месяц
+function saveHistoryEntry(e) {
+  if (e) e.preventDefault();
+
+  const id = document.getElementById("history-entry-id").value;
+  const monthKey = document.getElementById("history-entry-month").value; // "YYYY-MM"
+  const amount = Number(document.getElementById("history-entry-amount").value) || 0;
+  const note = document.getElementById("history-entry-note").value.trim();
+
+  if (!monthKey) return;
+
+  const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+  const [yearStr, monthStr] = monthKey.split('-');
+  const monthIdx = parseInt(monthStr, 10) - 1;
+  const label = `${monthNames[monthIdx]} ${yearStr}`;
+
+  if (id) {
+    const entry = state.cashbackHistory.find(h => h.id === id);
+    if (entry) {
+      entry.monthKey = monthKey;
+      entry.label = label;
+      entry.totalCashback = amount;
+      entry.note = note;
+      entry.timestamp = Date.now();
+    }
+  } else {
+    const existingIdx = state.cashbackHistory.findIndex(h => h.monthKey === monthKey);
+    if (existingIdx >= 0) {
+      state.cashbackHistory[existingIdx].totalCashback = amount;
+      state.cashbackHistory[existingIdx].label = label;
+      state.cashbackHistory[existingIdx].note = note;
+      state.cashbackHistory[existingIdx].timestamp = Date.now();
+    } else {
+      state.cashbackHistory.push({
+        id: Date.now().toString(),
+        monthKey,
+        label,
+        totalCashback: amount,
+        note,
+        byCard: note ? { noteCard: { name: note, amount } } : {},
+        timestamp: Date.now()
+      });
+    }
+  }
+
+  // Сортировка истории по убыванию даты
+  state.cashbackHistory.sort((a, b) => b.monthKey.localeCompare(a.monthKey));
+
+  saveState("cashback_history", JSON.stringify(state.cashbackHistory));
+  closeModal("history-entry-modal");
+  renderAnalytics();
+}
+
+// Удаление записи кешбэка за прошлый месяц
+function deleteHistoryEntry() {
+  const id = document.getElementById("history-entry-id").value;
+  if (!id) return;
+
+  if (confirm("Вы уверены, что хотите удалить эту запись из истории кешбэка?")) {
+    state.cashbackHistory = state.cashbackHistory.filter(h => h.id !== id);
+    saveState("cashback_history", JSON.stringify(state.cashbackHistory));
+    closeModal("history-entry-modal");
+    renderAnalytics();
+  }
 }
 
 // Слушатели событий аналитики
@@ -3097,6 +3202,28 @@ function setupAnalyticsEventListeners() {
   const closeMonthCloseBtn = document.getElementById("btn-close-month-modal");
   if (closeMonthCloseBtn) {
     closeMonthCloseBtn.onclick = () => closeModal("close-month-modal");
+  }
+
+  // Кнопка добавления кешбэка за прошлый месяц
+  const addHistoryBtn = document.getElementById("btn-add-history-entry");
+  if (addHistoryBtn) {
+    addHistoryBtn.onclick = () => openHistoryEntryModal();
+  }
+
+  // Модалка ручного внесения истории кешбэка
+  const closeHistoryModalBtn = document.getElementById("btn-close-history-entry-modal");
+  if (closeHistoryModalBtn) {
+    closeHistoryModalBtn.onclick = () => closeModal("history-entry-modal");
+  }
+
+  const historyForm = document.getElementById("history-entry-form");
+  if (historyForm) {
+    historyForm.onsubmit = saveHistoryEntry;
+  }
+
+  const deleteHistoryBtn = document.getElementById("btn-delete-history-entry");
+  if (deleteHistoryBtn) {
+    deleteHistoryBtn.onclick = deleteHistoryEntry;
   }
 
   // Переключение периода аналитики
