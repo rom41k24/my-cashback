@@ -2758,19 +2758,23 @@ function openDepositActionModal(depositId, mode = "payout") {
   const now = new Date();
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
+  const monthInput = document.getElementById("deposit-action-month");
+
   if (mode === "payout") {
     if (titleEl) titleEl.textContent = `Выплата — ${deposit.name}`;
     if (payoutFields) payoutFields.style.display = "block";
     if (balanceFields) balanceFields.style.display = "none";
+    if (monthInput) monthInput.required = true;
 
     const expectedMonthly = Math.round((deposit.amount * (deposit.rate / 100)) / 12);
     document.getElementById("deposit-action-amount").value = expectedMonthly;
-    document.getElementById("deposit-action-month").value = currentMonthKey;
+    if (monthInput) monthInput.value = currentMonthKey;
     if (hintEl) hintEl.textContent = `Авторасчёт по ставке ${deposit.rate}%: ${expectedMonthly.toLocaleString('ru-RU')} ₽`;
   } else {
     if (titleEl) titleEl.textContent = `Баланс — ${deposit.name}`;
     if (payoutFields) payoutFields.style.display = "none";
     if (balanceFields) balanceFields.style.display = "block";
+    if (monthInput) monthInput.required = false;
 
     document.getElementById("deposit-new-balance").value = deposit.amount;
   }
