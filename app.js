@@ -2760,33 +2760,76 @@ function openDepositActionModal(depositId, mode = "payout") {
   const titleEl = document.getElementById("deposit-action-modal-title");
   const payoutFields = document.getElementById("deposit-action-payout-fields");
   const balanceFields = document.getElementById("deposit-action-balance-fields");
-  const hintEl = document.getElementById("deposit-action-calc-hint");
+  const deletePayoutBtn = document.getElementById("btn-delete-deposit-payout");
+  const monthInput = document.getElementById("deposit-action-month");
 
   const now = new Date();
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-  const monthInput = document.getElementById("deposit-action-month");
 
   if (mode === "payout") {
     if (titleEl) titleEl.textContent = `Выплата — ${deposit.name}`;
     if (payoutFields) payoutFields.style.display = "block";
     if (balanceFields) balanceFields.style.display = "none";
-    if (monthInput) monthInput.required = true;
-
-    const expectedMonthly = Math.round((deposit.amount * (deposit.rate / 100)) / 12);
-    document.getElementById("deposit-action-amount").value = expectedMonthly;
-    if (monthInput) monthInput.value = currentMonthKey;
-    if (hintEl) hintEl.textContent = `Авторасчёт по ставке ${deposit.rate}%: ${expectedMonthly.toLocaleString('ru-RU')} ₽`;
+    if (monthInput) {
+      monthInput.required = true;
+      monthInput.value = currentMonthKey;
+      monthInput.onchange = updateDepositPayoutModalState;
+    }
+    updateDepositPayoutModalState();
   } else {
     if (titleEl) titleEl.textContent = `Баланс — ${deposit.name}`;
     if (payoutFields) payoutFields.style.display = "none";
     if (balanceFields) balanceFields.style.display = "block";
     if (monthInput) monthInput.required = false;
+    if (deletePayoutBtn) deletePayoutBtn.style.display = "none";
 
     document.getElementById("deposit-new-balance").value = deposit.amount;
   }
 
   openModal("deposit-action-modal");
+}
+
+// Проверка наличия зафиксированной выплаты за выбранный месяц и обновление кнопок/подсказок
+function updateDepositPayoutModalState() {
+  const depositId = document.getElementById("deposit-action-id").value;
+  const monthKey = document.getElementById("deposit-action-month").value;
+  const deletePayoutBtn = document.getElementById("btn-delete-deposit-payout");
+  const hintEl = document.getElementById("deposit-action-calc-hint");
+  const amountInput = document.getElementById("deposit-action-amount");
+
+  const deposit = state.deposits.find(d => d.id === depositId);
+  if (!deposit || !monthKey) return;
+
+  const expectedMonthly = Math.round((deposit.amount * (deposit.rate / 100)) / 12);
+  const existingPayout = deposit.history && deposit.history.find(h => h.monthKey === monthKey);
+
+  if (existingPayout) {
+    if (deletePayoutBtn) deletePayoutBtn.style.display = "block";
+    if (amountInput) amountInput.value = existingPayout.amount;
+    if (hintEl) hintEl.textContent = `За этот месяц зафиксировано: ${Number(existingPayout.amount).toLocaleString('ru-RU')} ₽ (можно изменить или удалить)`;
+  } else {
+    if (deletePayoutBtn) deletePayoutBtn.style.display = "none";
+    if (amountInput) amountInput.value = expectedMonthly;
+    if (hintEl) hintEl.textContent = `Авторасчёт по ставке ${deposit.rate}%: ${expectedMonthly.toLocaleString('ru-RU')} ₽`;
+  }
+}
+
+// Отмена/удаление выплаты по вкладу за выбранный месяц
+function deleteDepositPayout() {
+  const depositId = document.getElementById("deposit-action-id").value;
+  const monthKey = document.getElementById("deposit-action-month").value;
+  const deposit = state.deposits.find(d => d.id === depositId);
+
+  if (!deposit || !monthKey) return;
+
+  if (confirm(`Отменить зафиксированную выплату по вкладу за выбранный месяц?`)) {
+    if (Array.isArray(deposit.history)) {
+      deposit.history = deposit.history.filter(h => h.monthKey !== monthKey);
+    }
+    saveState("cashback_deposits", JSON.stringify(state.deposits));
+    closeModal("deposit-action-modal");
+    renderAnalytics();
+  }
 }
 
 // Сохранение действия с вкладом (выплата или новый баланс)
@@ -3470,6 +3513,9 @@ function setupAnalyticsEventListeners() {
 
   const depositActionForm = document.getElementById("deposit-action-form");
   if (depositActionForm) depositActionForm.onsubmit = saveDepositAction;
+
+  const deletePayoutBtn = document.getElementById("btn-delete-deposit-payout");
+  if (deletePayoutBtn) deletePayoutBtn.onclick = deleteDepositPayout;
 }
 
 // Инициализация при загрузке страницы
