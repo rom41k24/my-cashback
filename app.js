@@ -2872,21 +2872,26 @@ function saveDepositAction(e) {
 
 // Главная функция рендеринга аналитики
 function renderAnalytics() {
-  const period = state.analyticsPeriod || "month";
+  const period = state.analyticsPeriod || "3months";
   const now = new Date();
   
   // Генерация ключевых месяцев в зависимости от периода
   const monthKeys = [];
-  let monthsCount = 1;
-  if (period === "month") monthsCount = 1;
+  let monthsCount = 3;
+  if (period === "2months") monthsCount = 2;
   else if (period === "3months") monthsCount = 3;
+  else if (period === "4months") monthsCount = 4;
+  else if (period === "5months") monthsCount = 5;
   else if (period === "6months") monthsCount = 6;
+  else if (period === "year") monthsCount = 12;
   else if (period === "all") monthsCount = 12;
 
   for (let i = 0; i < monthsCount; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
   }
+
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
   // Расчёт кешбэка за выбранный период
   let totalCashback = 0;
@@ -2896,9 +2901,9 @@ function renderAnalytics() {
     }
   });
 
-  // Добавляем текущий накопленный кешбэк по картам, если рассматриваем текущий месяц или всё время
+  // Добавляем текущий накопленный кешбэк по картам, если месяц включен в период
   const currentCardsAccumulated = state.cards.reduce((sum, c) => sum + (Number(c.accumulated) || 0), 0);
-  if (period === "month" || period === "all") {
+  if (period === "all" || monthKeys.includes(currentMonthKey)) {
     totalCashback += currentCardsAccumulated;
   }
 
@@ -2914,9 +2919,8 @@ function renderAnalytics() {
     }
     // Если выплат в истории ещё нет, но вклад активен, прибавляем ожидания для текущего месяца
     if (!dep.archived && dep.calcType === "auto" && dep.amount > 0 && dep.rate > 0) {
-      const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
       const hasHistoryCurrentMonth = dep.history && dep.history.some(h => h.monthKey === currentMonthKey);
-      if (!hasHistoryCurrentMonth && (period === "month" || period === "all")) {
+      if (!hasHistoryCurrentMonth && (period === "all" || monthKeys.includes(currentMonthKey))) {
         totalDeposits += Math.round((dep.amount * (dep.rate / 100)) / 12);
       }
     }
@@ -2936,10 +2940,13 @@ function renderAnalytics() {
 
   if (periodLabelEl) {
     const periodTextMap = {
-      month: "За текущий месяц",
+      "2months": "За последние 2 месяца",
       "3months": "За последние 3 месяца",
+      "4months": "За последние 4 месяца",
+      "5months": "За последние 5 месяцев",
       "6months": "За последние 6 месяцев",
-      all: "За всё время учёта"
+      "year": "За последний год",
+      "all": "За всё время учёта"
     };
     periodLabelEl.textContent = periodTextMap[period] || "За выбранный период";
   }
@@ -3019,6 +3026,7 @@ function renderAnalyticsChart() {
     chartData.push({
       monthLabel,
       fullMonthLabel,
+      monthKey,
       monthCashback,
       monthDeposits,
       monthTotal
@@ -3073,33 +3081,48 @@ function renderAnalyticsChart() {
   }
 }
 
-// Отображение детализации доходов (кешбэк vs вклады) под графиком при тапе
+// Отображение детализации доходов (кешбэк vs вклады) под графиком при тапе и синхронизация дашборда
 function showChartBarDetails(barEl, item) {
   document.querySelectorAll(".chart-bar-group").forEach(el => el.classList.remove("selected"));
   if (barEl) barEl.classList.add("selected");
 
+  // 1. Обновляем плашку под графиком
   const popover = document.getElementById("chart-detail-popover");
-  if (!popover) return;
+  if (popover) {
+    popover.style.display = "block";
+    popover.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 13px; font-weight: 700; color: var(--text-primary);">${item.fullMonthLabel}</span>
+        <span style="font-size: 13px; font-weight: 800; color: var(--accent-color);">Итого: ${item.monthTotal.toLocaleString('ru-RU')} ₽</span>
+      </div>
+      <div style="display: flex; gap: 16px; font-size: 12px; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #0a84ff; display: inline-block;"></span>
+          <span style="color: var(--text-secondary);">Кешбэк:</span>
+          <strong style="color: var(--text-primary);">${item.monthCashback.toLocaleString('ru-RU')} ₽</strong>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #30d158; display: inline-block;"></span>
+          <span style="color: var(--text-secondary);">Вклады:</span>
+          <strong style="color: var(--text-primary);">${item.monthDeposits.toLocaleString('ru-RU')} ₽</strong>
+        </div>
+      </div>
+    `;
+  }
 
-  popover.style.display = "block";
-  popover.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-      <span style="font-size: 13px; font-weight: 700; color: var(--text-primary);">${item.fullMonthLabel}</span>
-      <span style="font-size: 13px; font-weight: 800; color: var(--accent-color);">Итого: ${item.monthTotal.toLocaleString('ru-RU')} ₽</span>
-    </div>
-    <div style="display: flex; gap: 16px; font-size: 12px; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; flex-wrap: wrap;">
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <span style="width: 8px; height: 8px; border-radius: 50%; background: #0a84ff; display: inline-block;"></span>
-        <span style="color: var(--text-secondary);">Кешбэк:</span>
-        <strong style="color: var(--text-primary);">${item.monthCashback.toLocaleString('ru-RU')} ₽</strong>
-      </div>
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <span style="width: 8px; height: 8px; border-radius: 50%; background: #30d158; display: inline-block;"></span>
-        <span style="color: var(--text-secondary);">Вклады:</span>
-        <strong style="color: var(--text-primary);">${item.monthDeposits.toLocaleString('ru-RU')} ₽</strong>
-      </div>
-    </div>
-  `;
+  // 2. Обновляем сводный дашборд (Пассивный доход, Кешбэк, Вклады, Подпись) в соответствии с нажатым месяцем
+  const totalIncomeEl = document.getElementById("analytics-total-income");
+  const cashbackTotalEl = document.getElementById("analytics-cashback-total");
+  const depositsTotalEl = document.getElementById("analytics-deposits-total");
+  const periodLabelEl = document.getElementById("analytics-period-label");
+
+  if (totalIncomeEl) totalIncomeEl.textContent = `${item.monthTotal.toLocaleString('ru-RU')} ₽`;
+  if (cashbackTotalEl) cashbackTotalEl.textContent = `${item.monthCashback.toLocaleString('ru-RU')} ₽`;
+  if (depositsTotalEl) depositsTotalEl.textContent = `${item.monthDeposits.toLocaleString('ru-RU')} ₽`;
+  if (periodLabelEl) periodLabelEl.textContent = `За ${item.fullMonthLabel}`;
+
+  // 3. Обновляем разбивку кешбэка по банкам именно для этого нажатого месяца
+  renderBanksBreakdown([item.monthKey], "selectedMonth");
 }
 
 // Отрисовка списка активных вкладов

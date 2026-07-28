@@ -1871,14 +1871,22 @@ input:checked + .slider:before {
   border-radius: 14px;
   padding: 4px;
   gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.period-selector::-webkit-scrollbar {
+  display: none;
 }
 
 .period-btn {
-  flex: 1;
+  flex: 1 0 auto;
+  white-space: nowrap;
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  padding: 8px 0;
+  padding: 8px 12px;
   font-size: 12px;
   font-weight: 600;
   border-radius: 10px;
