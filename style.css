@@ -92,21 +92,21 @@ body {
   text-align: center;
 }
 
+/* Главный экран карт - строго по левому краю */
+#cards-screen .screen-header,
+#cards-screen .screen-header h1,
+#cards-screen .screen-header .subtitle,
+.screen-header.header-with-action,
+.screen-header.header-with-action h1,
+.screen-header.header-with-action .subtitle,
+.screen-header.header-with-action > div {
+  text-align: left !important;
+}
+
 .header-with-action {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  text-align: left;
-}
-
-.header-with-action h1,
-.header-with-action .subtitle {
-  text-align: left;
-}
-
-.header-with-action > div {
-  flex: 1;
-  text-align: left;
 }
 
 .btn-icon {
