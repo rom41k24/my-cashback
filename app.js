@@ -2963,6 +2963,7 @@ function renderAnalyticsChart() {
   if (!chartContainer) return;
 
   const monthNamesShort = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
+  const monthNamesFull = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
   const now = new Date();
 
   // Автоматически находит самый ранний месяц из истории, чтобы отобразить его на графике (минимум 6 месяцев)
@@ -2989,6 +2990,7 @@ function renderAnalyticsChart() {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     const monthLabel = monthNamesShort[d.getMonth()];
+    const fullMonthLabel = `${monthNamesFull[d.getMonth()]} ${d.getFullYear()}`;
 
     // Кешбэк за этот месяц
     let monthCashback = 0;
@@ -3016,6 +3018,7 @@ function renderAnalyticsChart() {
 
     chartData.push({
       monthLabel,
+      fullMonthLabel,
       monthCashback,
       monthDeposits,
       monthTotal
@@ -3028,20 +3031,22 @@ function renderAnalyticsChart() {
         Нет данных для построения графика. Завершите месяц или добавьте вклад.
       </div>
     `;
+    const popover = document.getElementById("chart-detail-popover");
+    if (popover) popover.style.display = "none";
     return;
   }
 
-  const chartHtml = chartData.map(item => {
+  const chartHtml = chartData.map((item, idx) => {
     const cashbackPct = Math.round((item.monthCashback / maxMonthlyVal) * 100);
     const depositPct = Math.round((item.monthDeposits / maxMonthlyVal) * 100);
     const totalHeightPct = Math.min(100, Math.max(12, Math.round((item.monthTotal / maxMonthlyVal) * 100)));
 
     return `
-      <div class="chart-bar-group">
+      <div class="chart-bar-group" data-index="${idx}">
         <span class="chart-bar-val">${item.monthTotal > 0 ? item.monthTotal.toLocaleString('ru-RU') + '₽' : ''}</span>
         <div class="chart-bar-stack" style="height: ${totalHeightPct}%;">
-          ${depositPct > 0 ? `<div class="bar-segment-deposit" style="height: ${depositPct}%;" title="Вклады: ${item.monthDeposits} ₽"></div>` : ''}
-          ${cashbackPct > 0 ? `<div class="bar-segment-cashback" style="height: ${cashbackPct}%;" title="Кешбэк: ${item.monthCashback} ₽"></div>` : ''}
+          ${depositPct > 0 ? `<div class="bar-segment-deposit" style="height: ${depositPct}%;" title="Вклады: ${item.monthDeposits.toLocaleString('ru-RU')} ₽"></div>` : ''}
+          ${cashbackPct > 0 ? `<div class="bar-segment-cashback" style="height: ${cashbackPct}%;" title="Кешбэк: ${item.monthCashback.toLocaleString('ru-RU')} ₽"></div>` : ''}
         </div>
         <span class="chart-bar-month">${item.monthLabel}</span>
       </div>
@@ -3049,6 +3054,52 @@ function renderAnalyticsChart() {
   }).join('');
 
   chartContainer.innerHTML = chartHtml;
+
+  // Навешиваем слушатели на столбцы графика
+  const barElements = chartContainer.querySelectorAll(".chart-bar-group");
+  barElements.forEach(barEl => {
+    barEl.onclick = () => {
+      const idx = parseInt(barEl.getAttribute("data-index"), 10);
+      if (!isNaN(idx) && chartData[idx]) {
+        showChartBarDetails(barEl, chartData[idx]);
+      }
+    };
+  });
+
+  // По умолчанию выбираем последний месяц в списке
+  if (barElements.length > 0) {
+    const lastIdx = barElements.length - 1;
+    showChartBarDetails(barElements[lastIdx], chartData[lastIdx]);
+  }
+}
+
+// Отображение детализации доходов (кешбэк vs вклады) под графиком при тапе
+function showChartBarDetails(barEl, item) {
+  document.querySelectorAll(".chart-bar-group").forEach(el => el.classList.remove("selected"));
+  if (barEl) barEl.classList.add("selected");
+
+  const popover = document.getElementById("chart-detail-popover");
+  if (!popover) return;
+
+  popover.style.display = "block";
+  popover.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      <span style="font-size: 13px; font-weight: 700; color: var(--text-primary);">${item.fullMonthLabel}</span>
+      <span style="font-size: 13px; font-weight: 800; color: var(--accent-color);">Итого: ${item.monthTotal.toLocaleString('ru-RU')} ₽</span>
+    </div>
+    <div style="display: flex; gap: 16px; font-size: 12px; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: #0a84ff; display: inline-block;"></span>
+        <span style="color: var(--text-secondary);">Кешбэк:</span>
+        <strong style="color: var(--text-primary);">${item.monthCashback.toLocaleString('ru-RU')} ₽</strong>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: #30d158; display: inline-block;"></span>
+        <span style="color: var(--text-secondary);">Вклады:</span>
+        <strong style="color: var(--text-primary);">${item.monthDeposits.toLocaleString('ru-RU')} ₽</strong>
+      </div>
+    </div>
+  `;
 }
 
 // Отрисовка списка активных вкладов

@@ -2026,6 +2026,25 @@ input:checked + .slider:before {
   gap: 8px;
   height: 130px;
   justify-content: flex-end;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.2s ease;
+}
+
+.chart-bar-group:active,
+.chart-bar-group.selected {
+  transform: scale(1.06);
+}
+
+.chart-bar-group.selected .chart-bar-stack {
+  box-shadow: 0 0 12px rgba(10, 132, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.chart-bar-group.selected .chart-bar-month {
+  color: var(--text-primary);
+  font-weight: 700;
 }
 
 .chart-bar-stack {
@@ -2038,7 +2057,7 @@ input:checked + .slider:before {
   overflow: hidden;
   background: rgba(255, 255, 255, 0.04);
   position: relative;
-  transition: height 0.3s ease;
+  transition: height 0.3s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .bar-segment-cashback {
