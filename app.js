@@ -3069,48 +3069,18 @@ function renderAnalyticsChart() {
     barEl.onclick = () => {
       const idx = parseInt(barEl.getAttribute("data-index"), 10);
       if (!isNaN(idx) && chartData[idx]) {
-        showChartBarDetails(barEl, chartData[idx]);
+        selectChartMonthBar(barEl, chartData[idx]);
       }
     };
   });
-
-  // По умолчанию выбираем последний месяц в списке
-  if (barElements.length > 0) {
-    const lastIdx = barElements.length - 1;
-    showChartBarDetails(barElements[lastIdx], chartData[lastIdx]);
-  }
 }
 
-// Отображение детализации доходов (кешбэк vs вклады) под графиком при тапе и синхронизация дашборда
-function showChartBarDetails(barEl, item) {
+// Выбор конкретного месяца при тапе по столбцу графика
+function selectChartMonthBar(barEl, item) {
   document.querySelectorAll(".chart-bar-group").forEach(el => el.classList.remove("selected"));
   if (barEl) barEl.classList.add("selected");
 
-  // 1. Обновляем плашку под графиком
-  const popover = document.getElementById("chart-detail-popover");
-  if (popover) {
-    popover.style.display = "block";
-    popover.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <span style="font-size: 13px; font-weight: 700; color: var(--text-primary);">${item.fullMonthLabel}</span>
-        <span style="font-size: 13px; font-weight: 800; color: var(--accent-color);">Итого: ${item.monthTotal.toLocaleString('ru-RU')} ₽</span>
-      </div>
-      <div style="display: flex; gap: 16px; font-size: 12px; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 8px; flex-wrap: wrap;">
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #0a84ff; display: inline-block;"></span>
-          <span style="color: var(--text-secondary);">Кешбэк:</span>
-          <strong style="color: var(--text-primary);">${item.monthCashback.toLocaleString('ru-RU')} ₽</strong>
-        </div>
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #30d158; display: inline-block;"></span>
-          <span style="color: var(--text-secondary);">Вклады:</span>
-          <strong style="color: var(--text-primary);">${item.monthDeposits.toLocaleString('ru-RU')} ₽</strong>
-        </div>
-      </div>
-    `;
-  }
-
-  // 2. Обновляем сводный дашборд (Пассивный доход, Кешбэк, Вклады, Подпись) в соответствии с нажатым месяцем
+  // 1. Обновляем сводный дашборд Пассивного дохода для выбранного месяца
   const totalIncomeEl = document.getElementById("analytics-total-income");
   const cashbackTotalEl = document.getElementById("analytics-cashback-total");
   const depositsTotalEl = document.getElementById("analytics-deposits-total");
@@ -3121,7 +3091,7 @@ function showChartBarDetails(barEl, item) {
   if (depositsTotalEl) depositsTotalEl.textContent = `${item.monthDeposits.toLocaleString('ru-RU')} ₽`;
   if (periodLabelEl) periodLabelEl.textContent = `За ${item.fullMonthLabel}`;
 
-  // 3. Обновляем разбивку кешбэка по банкам именно для этого нажатого месяца
+  // 2. Обновляем разбивку кешбэка по банкам именно для этого нажатого месяца
   renderBanksBreakdown([item.monthKey], "selectedMonth");
 }
 
