@@ -2725,13 +2725,20 @@ function saveDeposit(e) {
   renderAnalytics();
 }
 
-// Удаление вклада
+// Удаление вклада (сохраняет зафиксированные выплаты в архиве)
 function deleteDeposit() {
   const id = document.getElementById("deposit-id").value;
   if (!id) return;
 
-  if (confirm("Вы уверены, что хотите удалить этот вклад?")) {
-    state.deposits = state.deposits.filter(d => d.id !== id);
+  const deposit = state.deposits.find(d => d.id === id);
+  if (!deposit) return;
+
+  if (confirm("Закрыть вклад? Все зафиксированные выплаты за прошлые месяцы сохранятся в вашей аналитике.")) {
+    if (Array.isArray(deposit.history) && deposit.history.length > 0) {
+      deposit.archived = true;
+    } else {
+      state.deposits = state.deposits.filter(d => d.id !== id);
+    }
     saveState("cashback_deposits", JSON.stringify(state.deposits));
     closeModal("deposit-modal");
     renderAnalytics();
@@ -2863,7 +2870,7 @@ function renderAnalytics() {
       });
     }
     // Если выплат в истории ещё нет, но вклад активен, прибавляем ожидания для текущего месяца
-    if (dep.calcType === "auto" && dep.amount > 0 && dep.rate > 0) {
+    if (!dep.archived && dep.calcType === "auto" && dep.amount > 0 && dep.rate > 0) {
       const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
       const hasHistoryCurrentMonth = dep.history && dep.history.some(h => h.monthKey === currentMonthKey);
       if (!hasHistoryCurrentMonth && (period === "month" || period === "all")) {
@@ -2956,7 +2963,7 @@ function renderAnalyticsChart() {
         const payout = dep.history.find(h => h.monthKey === monthKey);
         if (payout) monthDeposits += Number(payout.amount) || 0;
       }
-      if (i === 0 && monthDeposits === 0 && dep.calcType === "auto" && dep.amount > 0) {
+      if (!dep.archived && i === 0 && monthDeposits === 0 && dep.calcType === "auto" && dep.amount > 0) {
         monthDeposits += Math.round((dep.amount * (dep.rate / 100)) / 12);
       }
     });
@@ -3001,12 +3008,14 @@ function renderAnalyticsChart() {
   chartContainer.innerHTML = chartHtml;
 }
 
-// Отрисовка списка вкладов
+// Отрисовка списка активных вкладов
 function renderDepositsList() {
   const container = document.getElementById("deposits-container");
   if (!container) return;
 
-  if (!state.deposits || state.deposits.length === 0) {
+  const activeDeposits = (state.deposits || []).filter(d => !d.archived);
+
+  if (activeDeposits.length === 0) {
     container.innerHTML = `
       <div style="text-align: center; color: var(--text-secondary); padding: 24px 12px; background: rgba(255,255,255,0.02); border-radius: 14px; border: 1px dashed var(--border-color);">
         <p style="font-weight: 500;">У вас пока нет активных вкладов</p>
@@ -3015,7 +3024,7 @@ function renderDepositsList() {
     return;
   }
 
-  const html = state.deposits.map(d => {
+  const html = activeDeposits.map(d => {
     const monthlyIncome = Math.round((d.amount * (d.rate / 100)) / 12);
 
     return `

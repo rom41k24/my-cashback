@@ -1,9 +1,9 @@
-const CACHE_NAME = 'cashback-tracker-v23';
+const CACHE_NAME = 'cashback-tracker-v24';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
-  './app.js?v=23',
+  './app.js?v=24',
   './manifest.json',
   './icon.svg'
 ];
