@@ -8,11 +8,11 @@ const DEFAULT_CARDS = [
     cardType: "Плюс",
     network: "mir",
     categories: [
-      { name: "Все покупки", value: 2 },
-      { name: "Яндекс Такси (Комфорт, Комфорт+, Ultima)", value: 5 },
-      { name: "Яндекс Лавка", value: 5 },
-      { name: "Яндекс Еда и Деливери", value: 100 },
-      { name: "Самокаты", value: 7 }
+      { name: "Яндекс Такси", value: 5 },
+      { name: "Супермаркеты", value: 5 },
+      { name: "Кафе, бары и рестораны", value: 5 },
+      { name: "Все покупки", value: 1 },
+      { name: "Красота", value: 5 }
     ]
   },
   {
@@ -23,11 +23,11 @@ const DEFAULT_CARDS = [
     cardType: "Дебетовая",
     network: "visa",
     categories: [
-      { name: "Супермаркеты", value: 5 },
-      { name: "Здоровье", value: 3 },
+      { name: "Спорттовары", value: 5 },
+      { name: "Фастфуд", value: 3 },
+      { name: "На всё", value: 1 },
       { name: "Рестораны", value: 5 },
-      { name: "Техника", value: 7 },
-      { name: "Спорттовары", value: 5 }
+      { name: "Супермаркеты", value: 3 }
     ]
   },
   {
@@ -42,7 +42,6 @@ const DEFAULT_CARDS = [
       { name: "Рестораны и доставка еды", value: 3 },
       { name: "Фастфуд", value: 3 },
       { name: "Одежда", value: 3 },
-      { name: "Детские товары", value: 3 },
       { name: "Все покупки", value: 1 }
     ]
   },
@@ -54,9 +53,9 @@ const DEFAULT_CARDS = [
     cardType: "Black",
     network: "mir",
     categories: [
-      { name: "Все покупки", value: 1 },
-      { name: "Аптеки", value: 5 },
       { name: "Одежда и обувь", value: 5 },
+      { name: "Цветы", value: 5 },
+      { name: "Аптеки", value: 5 },
       { name: "Развлечения", value: 5 }
     ]
   },
@@ -68,10 +67,9 @@ const DEFAULT_CARDS = [
     cardType: "Classic",
     network: "visa",
     categories: [
-      { name: "Цветы", value: 5 },
-      { name: "Красота", value: 5 },
       { name: "Дикси Доставка", value: 20 },
-      { name: "Цифровые товары", value: 6 }
+      { name: "Ювелирные изделия", value: 5 },
+      { name: "Цифровые товары", value: 5 }
     ]
   },
   {
@@ -82,11 +80,10 @@ const DEFAULT_CARDS = [
     cardType: "Дебетовая",
     network: "mir",
     categories: [
-      { name: "Кафе и рестораны", value: 5 },
-      { name: "Почта России", value: 10 },
       { name: "Театры и кино", value: 15 },
-      { name: "Все остальные покупки", value: 1 },
-      { name: "Транспорт", value: 5 }
+      { name: "Все остальные покупки", value: 2 },
+      { name: "Дом и ремонт", value: 5 },
+      { name: "ВТБ Путешествия", value: 5 }
     ]
   }
 ];
@@ -404,51 +401,48 @@ let draggedCardId = null;
 let cvvVisible = false;
 let revealedCardIds = new Set();
 
-// Функция миграции категорий карт на новые значения за июль
+// Функция миграции категорий карт на новые значения за август
 function migrateCardCategories(cards) {
   if (!Array.isArray(cards)) return false;
   
   const newCategoriesMap = {
     yandex: [
-      { name: "Все покупки", value: 2 },
-      { name: "Яндекс Такси (Комфорт, Комфорт+, Ultima)", value: 5 },
-      { name: "Яндекс Лавка", value: 5 },
-      { name: "Яндекс Еда и Деливери", value: 100 },
-      { name: "Самокаты", value: 7 }
+      { name: "Яндекс Такси", value: 5 },
+      { name: "Супермаркеты", value: 5 },
+      { name: "Кафе, бары и рестораны", value: 5 },
+      { name: "Все покупки", value: 1 },
+      { name: "Красота", value: 5 }
     ],
     mts_debit: [
-      { name: "Супермаркеты", value: 5 },
-      { name: "Здоровье", value: 3 },
+      { name: "Спорттовары", value: 5 },
+      { name: "Фастфуд", value: 3 },
+      { name: "На всё", value: 1 },
       { name: "Рестораны", value: 5 },
-      { name: "Техника", value: 7 },
-      { name: "Спорттовары", value: 5 }
+      { name: "Супермаркеты", value: 3 }
     ],
     mts_credit: [
       { name: "Супермаркеты", value: 5 },
       { name: "Рестораны и доставка еды", value: 3 },
       { name: "Фастфуд", value: 3 },
       { name: "Одежда", value: 3 },
-      { name: "Детские товары", value: 3 },
       { name: "Все покупки", value: 1 }
     ],
     tinkoff: [
-      { name: "Все покупки", value: 1 },
-      { name: "Аптеки", value: 5 },
       { name: "Одежда и обувь", value: 5 },
+      { name: "Цветы", value: 5 },
+      { name: "Аптеки", value: 5 },
       { name: "Развлечения", value: 5 }
     ],
     alfa: [
-      { name: "Цветы", value: 5 },
-      { name: "Красота", value: 5 },
       { name: "Дикси Доставка", value: 20 },
-      { name: "Цифровые товары", value: 6 }
+      { name: "Ювелирные изделия", value: 5 },
+      { name: "Цифровые товары", value: 5 }
     ],
     vtb: [
-      { name: "Кафе и рестораны", value: 5 },
-      { name: "Почта России", value: 10 },
       { name: "Театры и кино", value: 15 },
-      { name: "Все остальные покупки", value: 1 },
-      { name: "Транспорт", value: 5 }
+      { name: "Все остальные покупки", value: 2 },
+      { name: "Дом и ремонт", value: 5 },
+      { name: "ВТБ Путешествия", value: 5 }
     ]
   };
 
@@ -492,15 +486,15 @@ function initApp() {
   state.deposits = storedDeposits ? JSON.parse(storedDeposits) : [];
   state.sortMode = localStorage.getItem("sub_sort_mode") || "date-asc";
 
-  // Запуск миграции для локально загруженных карт (выполняется только один раз для версии v4)
-  if (!localStorage.getItem("cashback_v4_categories_updated")) {
+  // Запуск миграции для локально загруженных карт (выполняется только один раз для версии v5 Август)
+  if (!localStorage.getItem("cashback_v5_august_categories_updated")) {
     const didMigrate = migrateCardCategories(state.cards);
     if (didMigrate) {
       localStorage.setItem("cashback_cards", JSON.stringify(state.cards));
     }
     // Если облачная синхронизация отключена, сразу помечаем миграцию как выполненную
     if (!localStorage.getItem("sync_key")) {
-      localStorage.setItem("cashback_v4_categories_updated", "true");
+      localStorage.setItem("cashback_v5_august_categories_updated", "true");
     }
   }
 
@@ -2216,8 +2210,8 @@ async function pullDataFromCloud(key) {
       if (data.cashback_cards) {
         state.cards = data.cashback_cards;
         
-        // Мигрируем подгруженные из облака карты только один раз при первом запуске этой версии (v4)
-        if (!localStorage.getItem("cashback_v4_categories_updated")) {
+        // Мигрируем подгруженные из облака карты только один раз при первом запуске этой версии (v5 Август)
+        if (!localStorage.getItem("cashback_v5_august_categories_updated")) {
           const didMigrateCloud = migrateCardCategories(state.cards);
           localStorage.setItem("cashback_cards", JSON.stringify(state.cards));
           
@@ -2227,7 +2221,7 @@ async function pullDataFromCloud(key) {
               pushDataToCloud().catch(err => console.error("Ошибка автосинхронизации после облачной миграции:", err));
             }, 500);
           }
-          localStorage.setItem("cashback_v4_categories_updated", "true");
+          localStorage.setItem("cashback_v5_august_categories_updated", "true");
         } else {
           localStorage.setItem("cashback_cards", JSON.stringify(state.cards));
         }
