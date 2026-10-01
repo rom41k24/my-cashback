@@ -2694,20 +2694,24 @@ function openDepositModal(depositId = null) {
       document.getElementById("deposit-amount").value = deposit.amount || 0;
       document.getElementById("deposit-rate").value = deposit.rate || 0;
       document.getElementById("deposit-payout-day").value = deposit.payoutDay || 1;
-      document.getElementById("deposit-calc-type").value = deposit.calcType || "auto";
+      
+      const accountTypeEl = document.getElementById("deposit-account-type");
+      if (accountTypeEl) {
+        accountTypeEl.value = deposit.accountType || (deposit.calcType === "auto" ? "deposit" : "savings");
+      }
 
-      if (titleEl) titleEl.textContent = "Редактировать вклад";
+      if (titleEl) titleEl.textContent = "Редактировать счёт / вклад";
       if (deleteBtn) deleteBtn.style.display = "block";
     }
   } else {
-    if (titleEl) titleEl.textContent = "Добавить вклад";
+    if (titleEl) titleEl.textContent = "Добавить счёт / вклад";
     if (deleteBtn) deleteBtn.style.display = "none";
   }
 
   openModal("deposit-modal");
 }
 
-// Сохранение вклада
+// Сохранение вклада / накопительного счёта
 function saveDeposit(e) {
   if (e) e.preventDefault();
   
@@ -2717,7 +2721,9 @@ function saveDeposit(e) {
   const amount = Number(document.getElementById("deposit-amount").value) || 0;
   const rate = Number(document.getElementById("deposit-rate").value) || 0;
   const payoutDay = Number(document.getElementById("deposit-payout-day").value) || 1;
-  const calcType = document.getElementById("deposit-calc-type").value || "auto";
+  const accountTypeEl = document.getElementById("deposit-account-type");
+  const accountType = accountTypeEl ? accountTypeEl.value : "savings";
+  const calcType = accountType === "deposit" ? "auto" : "daily";
 
   if (!bank || !name) return;
 
@@ -2729,6 +2735,7 @@ function saveDeposit(e) {
       deposit.amount = amount;
       deposit.rate = rate;
       deposit.payoutDay = payoutDay;
+      deposit.accountType = accountType;
       deposit.calcType = calcType;
     }
   } else {
@@ -2739,6 +2746,7 @@ function saveDeposit(e) {
       amount,
       rate,
       payoutDay,
+      accountType,
       calcType,
       history: []
     });
@@ -2769,8 +2777,8 @@ function deleteDeposit() {
   }
 }
 
-// Открытие модалки выплаты или изменения баланса вклада
-function openDepositActionModal(depositId, mode = "payout") {
+// Открытие модалки настройки дохода или изменения баланса счёта
+function openDepositActionModal(depositId, mode = "payout", targetMonthKey = null) {
   const form = document.getElementById("deposit-action-form");
   if (!form) return;
 
@@ -2788,10 +2796,10 @@ function openDepositActionModal(depositId, mode = "payout") {
   const monthInput = document.getElementById("deposit-action-month");
 
   const now = new Date();
-  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const currentMonthKey = targetMonthKey || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
   if (mode === "payout") {
-    if (titleEl) titleEl.textContent = `Выплата — ${deposit.name}`;
+    if (titleEl) titleEl.textContent = `Доход — ${deposit.name}`;
     if (payoutFields) payoutFields.style.display = "block";
     if (balanceFields) balanceFields.style.display = "none";
     if (monthInput) {
@@ -2807,13 +2815,28 @@ function openDepositActionModal(depositId, mode = "payout") {
     if (monthInput) monthInput.required = false;
     if (deletePayoutBtn) deletePayoutBtn.style.display = "none";
 
-    document.getElementById("deposit-new-balance").value = deposit.amount;
+    document.getElementById("deposit-new-balance").value = deposit.amount || 0;
   }
 
   openModal("deposit-action-modal");
 }
 
-// Проверка наличия зафиксированной выплаты за выбранный месяц и обновление кнопок/подсказок
+// Быстрый вызов настройки дохода
+function openDepositIncomeModal(depositId, targetMonthKey = null) {
+  openDepositActionModal(depositId, "payout", targetMonthKey);
+}
+window.openDepositIncomeModal = openDepositIncomeModal;
+
+// Быстрая корректировка баланса кнопками-пресетами (+10k, +50k, etc.)
+function adjustBalancePreset(delta) {
+  const input = document.getElementById("deposit-new-balance");
+  if (!input) return;
+  const current = Number(input.value) || 0;
+  input.value = Math.max(0, current + delta);
+}
+window.adjustBalancePreset = adjustBalancePreset;
+
+// Проверка наличия зафиксированного дохода за выбранный месяц и обновление кнопок/подсказок
 function updateDepositPayoutModalState() {
   const depositId = document.getElementById("deposit-action-id").value;
   const monthKey = document.getElementById("deposit-action-month").value;
@@ -2830,15 +2853,15 @@ function updateDepositPayoutModalState() {
   if (existingPayout) {
     if (deletePayoutBtn) deletePayoutBtn.style.display = "block";
     if (amountInput) amountInput.value = existingPayout.amount;
-    if (hintEl) hintEl.textContent = `За этот месяц зафиксировано: ${Number(existingPayout.amount).toLocaleString('ru-RU')} ₽ (можно изменить или удалить)`;
+    if (hintEl) hintEl.innerHTML = `<span style="color: #30d158; font-weight: 600;">✓ Зафиксирован доход: ${Number(existingPayout.amount).toLocaleString('ru-RU')} ₽</span> (можно изменить или удалить)`;
   } else {
     if (deletePayoutBtn) deletePayoutBtn.style.display = "none";
-    if (amountInput) amountInput.value = expectedMonthly;
-    if (hintEl) hintEl.textContent = `Авторасчёт по ставке ${deposit.rate}%: ${expectedMonthly.toLocaleString('ru-RU')} ₽`;
+    if (amountInput) amountInput.value = expectedMonthly > 0 ? expectedMonthly : "";
+    if (hintEl) hintEl.innerHTML = `Расчётный прогноз по ставке ${deposit.rate}%: <strong>~${expectedMonthly.toLocaleString('ru-RU')} ₽</strong>. Укажите фактически начисленный банком доход.`;
   }
 }
 
-// Отмена/удаление выплаты по вкладу за выбранный месяц
+// Отмена/удаление зафиксированного дохода по счёту за выбранный месяц
 function deleteDepositPayout() {
   const depositId = document.getElementById("deposit-action-id").value;
   const monthKey = document.getElementById("deposit-action-month").value;
@@ -2846,7 +2869,7 @@ function deleteDepositPayout() {
 
   if (!deposit || !monthKey) return;
 
-  if (confirm(`Отменить зафиксированную выплату по вкладу за выбранный месяц?`)) {
+  if (confirm(`Удалить зафиксированный доход за выбранный месяц? Он вернётся к расчётному прогнозу.`)) {
     if (Array.isArray(deposit.history)) {
       deposit.history = deposit.history.filter(h => h.monthKey !== monthKey);
     }
@@ -2856,7 +2879,7 @@ function deleteDepositPayout() {
   }
 }
 
-// Сохранение действия с вкладом (выплата или новый баланс)
+// Сохранение действия со счётом (доход или новый баланс)
 function saveDepositAction(e) {
   if (e) e.preventDefault();
 
@@ -2941,8 +2964,8 @@ function renderAnalytics() {
         }
       });
     }
-    // Если выплат в истории ещё нет, но вклад активен, прибавляем ожидания для текущего месяца
-    if (!dep.archived && dep.calcType === "auto" && dep.amount > 0 && dep.rate > 0) {
+    // Если выплат в истории ещё нет, но счёт/вклад активен, прибавляем расчётный прогноз для текущего месяца
+    if (!dep.archived && dep.amount > 0 && dep.rate > 0) {
       const hasHistoryCurrentMonth = dep.history && dep.history.some(h => h.monthKey === currentMonthKey);
       if (!hasHistoryCurrentMonth && (period === "all" || monthKeys.includes(currentMonthKey))) {
         totalDeposits += Math.round((dep.amount * (dep.rate / 100)) / 12);
@@ -3032,14 +3055,18 @@ function renderAnalyticsChart() {
       monthCashback = state.cards.reduce((sum, c) => sum + (Number(c.accumulated) || 0), 0);
     }
 
-    // Вклады за этот месяц
+    // Вклады и накопительные счета за этот месяц
     let monthDeposits = 0;
     state.deposits.forEach(dep => {
+      let foundPayout = false;
       if (Array.isArray(dep.history)) {
         const payout = dep.history.find(h => h.monthKey === monthKey);
-        if (payout) monthDeposits += Number(payout.amount) || 0;
+        if (payout) {
+          monthDeposits += Number(payout.amount) || 0;
+          foundPayout = true;
+        }
       }
-      if (!dep.archived && i === 0 && monthDeposits === 0 && dep.calcType === "auto" && dep.amount > 0) {
+      if (!dep.archived && i === 0 && !foundPayout && dep.amount > 0 && dep.rate > 0) {
         monthDeposits += Math.round((dep.amount * (dep.rate / 100)) / 12);
       }
     });
@@ -3119,7 +3146,7 @@ function selectChartMonthBar(barEl, item) {
   renderBanksBreakdown([item.monthKey], "selectedMonth");
 }
 
-// Отрисовка списка активных вкладов
+// Отрисовка списка активных вкладов и накопительных счетов
 function renderDepositsList() {
   const container = document.getElementById("deposits-container");
   if (!container) return;
@@ -3129,39 +3156,97 @@ function renderDepositsList() {
   if (activeDeposits.length === 0) {
     container.innerHTML = `
       <div style="text-align: center; color: var(--text-secondary); padding: 24px 12px; background: rgba(255,255,255,0.02); border-radius: 14px; border: 1px dashed var(--border-color);">
-        <p style="font-weight: 500;">У вас пока нет активных вкладов</p>
+        <p style="font-weight: 500;">У вас пока нет активных счетов или вкладов</p>
+        <button class="btn btn-secondary" onclick="openDepositModal()" style="margin-top: 10px; font-size: 12px; padding: 6px 14px;">+ Добавить счёт</button>
       </div>
     `;
     return;
   }
 
+  const now = new Date();
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const monthNamesShort = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
+
   const html = activeDeposits.map(d => {
-    const monthlyIncome = Math.round((d.amount * (d.rate / 100)) / 12);
+    const isSavings = d.accountType === "savings" || d.calcType === "daily" || d.name.toLowerCase().includes("накопит") || !d.accountType;
+    const typeLabel = isSavings ? "Накопительный счёт" : "Срочный вклад";
+    const monthlyForecast = Math.round((d.amount * (d.rate / 100)) / 12);
+
+    // Проверяем фактическую выплату за текущий месяц
+    const currentPayout = Array.isArray(d.history) ? d.history.find(h => h.monthKey === currentMonthKey) : null;
+    const hasActualCurrentIncome = currentPayout && Number(currentPayout.amount) >= 0;
+
+    // История выплат (сортировка по убыванию)
+    const sortedHistory = Array.isArray(d.history)
+      ? [...d.history].sort((a, b) => (b.monthKey || '').localeCompare(a.monthKey || ''))
+      : [];
+
+    // Мини-блок истории начислений
+    let historyPillsHtml = '';
+    if (sortedHistory.length > 0) {
+      historyPillsHtml = `
+        <div class="deposit-history-mini">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="deposit-history-mini-label">История начислений:</span>
+            <span style="font-size: 11px; color: var(--accent-color); cursor: pointer;" onclick="openDepositIncomeModal('${d.id}')">+ за другой месяц</span>
+          </div>
+          <div class="deposit-history-pills">
+            ${sortedHistory.map(h => {
+              const parts = (h.monthKey || '').split('-').map(Number);
+              const mName = parts.length === 2 ? monthNamesShort[parts[1] - 1] : h.monthKey;
+              return `
+                <button type="button" class="deposit-history-pill" onclick="openDepositIncomeModal('${d.id}', '${h.monthKey}')" title="Кликните, чтобы изменить или удалить доход за ${h.monthKey}">
+                  <span>${mName}:</span>
+                  <strong>+${Number(h.amount).toLocaleString('ru-RU')} ₽</strong>
+                  <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" stroke-width="2.5" fill="none" style="opacity: 0.6;"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                </button>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
 
     return `
       <div class="deposit-card">
         <div class="deposit-top-row">
           <div>
-            <span class="deposit-bank-badge">${d.bank}</span>
+            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+              <span class="deposit-bank-badge">${d.bank}</span>
+              <span class="deposit-type-badge ${isSavings ? 'type-savings' : 'type-deposit'}">${typeLabel}</span>
+            </div>
             <h3 class="deposit-title">${d.name}</h3>
           </div>
-          <button class="btn-icon" onclick="openDepositModal('${d.id}')" title="Редактировать" style="width: 32px; height: 32px;">
+          <button class="btn-icon" onclick="openDepositModal('${d.id}')" title="Параметры счёта" style="width: 32px; height: 32px;">
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
           </button>
         </div>
 
         <div class="deposit-stats-grid">
-          <div class="deposit-stat-item">
-            <span class="deposit-stat-label">Сумма вклада</span>
-            <span class="deposit-stat-value">${Number(d.amount).toLocaleString('ru-RU')} ₽</span>
+          <div class="deposit-stat-item deposit-balance-clickable" onclick="openDepositActionModal('${d.id}', 'balance')" title="Кликните, чтобы изменить баланс счёта">
+            <span class="deposit-stat-label">Остаток на счёте</span>
+            <span class="deposit-stat-value" style="display: flex; align-items: center; gap: 4px;">
+              ${Number(d.amount).toLocaleString('ru-RU')} ₽
+              <svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" stroke-width="2" fill="none" style="opacity: 0.6;"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            </span>
           </div>
           <div class="deposit-stat-item">
             <span class="deposit-stat-label">Ставка</span>
             <span class="deposit-stat-value" style="color: #30d158;">${d.rate}% годовых</span>
           </div>
-          <div class="deposit-stat-item">
-            <span class="deposit-stat-label">Доход в месяц</span>
-            <span class="deposit-stat-value">~${monthlyIncome.toLocaleString('ru-RU')} ₽</span>
+          <div class="deposit-stat-item deposit-income-clickable" onclick="openDepositIncomeModal('${d.id}', '${currentMonthKey}')" title="Кликните, чтобы настроить фактический доход за этот месяц">
+            <span class="deposit-stat-label">
+              Доход (${monthNamesShort[now.getMonth()]}) 
+              ${hasActualCurrentIncome 
+                ? '<span class="badge-status-fact" title="Фактический доход зафиксирован">факт</span>' 
+                : '<span class="badge-status-forecast" title="Расчётный ориентир на текущий остаток">прогноз</span>'}
+            </span>
+            <span class="deposit-stat-value" style="display: flex; align-items: center; gap: 6px; ${hasActualCurrentIncome ? 'color: #30d158;' : ''}">
+              ${hasActualCurrentIncome 
+                ? `+${Number(currentPayout.amount).toLocaleString('ru-RU')} ₽` 
+                : `~${monthlyForecast.toLocaleString('ru-RU')} ₽`}
+              <span class="quick-set-pill">${hasActualCurrentIncome ? 'изменить' : '+ указать'}</span>
+            </span>
           </div>
           <div class="deposit-stat-item">
             <span class="deposit-stat-label">Выплата</span>
@@ -3169,13 +3254,16 @@ function renderDepositsList() {
           </div>
         </div>
 
+        ${historyPillsHtml}
+
         <div class="deposit-card-actions">
-          <button class="btn-deposit-action btn-deposit-payout" onclick="openDepositActionModal('${d.id}', 'payout')">
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            Зафиксировать выплату
+          <button class="btn-deposit-action btn-deposit-payout" onclick="openDepositIncomeModal('${d.id}', '${currentMonthKey}')">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            ${hasActualCurrentIncome ? 'Изменить доход' : 'Указать доход'}
           </button>
           <button class="btn-deposit-action" onclick="openDepositActionModal('${d.id}', 'balance')">
-            ± Баланс
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+            ± Баланс (пополнить/снять)
           </button>
         </div>
       </div>
