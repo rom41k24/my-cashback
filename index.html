@@ -23,7 +23,7 @@
       <header class="screen-header header-with-action">
         <div>
           <h1 id="cashback-title">Кешбэк в октябре</h1>
-          <p class="subtitle">Ваши карты и повышенные категории (v19)</p>
+          <p class="subtitle">Ваши карты и повышенные категории (v20)</p>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
           <div id="sync-indicator" title="Синхронизация отключена" style="width: 8px; height: 8px; border-radius: 50%; background: #a0a0ab; transition: background 0.3s, transform 0.3s; margin-right: 4px;"></div>
@@ -652,11 +652,11 @@
           <div class="form-row">
             <div class="form-group">
               <label for="deposit-amount">Сумма вклада (₽)</label>
-              <input type="number" id="deposit-amount" placeholder="100000" min="0" step="1000" required>
+              <input type="number" id="deposit-amount" placeholder="100000" min="0" step="any" required>
             </div>
             <div class="form-group">
               <label for="deposit-rate">Ставка (% годовых)</label>
-              <input type="number" id="deposit-rate" placeholder="18.5" min="0" step="0.1" required>
+              <input type="number" id="deposit-rate" placeholder="18.5" min="0" step="any" required>
             </div>
           </div>
 
@@ -703,7 +703,7 @@
             </div>
             <div class="form-group">
               <label for="deposit-action-amount">Фактически заработано (₽)</label>
-              <input type="number" id="deposit-action-amount" placeholder="0" min="0" step="1">
+              <input type="number" id="deposit-action-amount" placeholder="0" min="0" step="any">
               <small style="color: var(--text-secondary); display: block; margin-top: 6px; font-size: 12px; line-height: 1.4;" id="deposit-action-calc-hint">Авторасчёт: 0 ₽</small>
             </div>
           </div>
@@ -711,7 +711,7 @@
           <div id="deposit-action-balance-fields" style="display: none;">
             <div class="form-group">
               <label for="deposit-new-balance">Текущий остаток на счёте (₽)</label>
-              <input type="number" id="deposit-new-balance" placeholder="0" min="0" step="1000">
+              <input type="number" id="deposit-new-balance" placeholder="0" min="0" step="any">
               <div class="deposit-balance-presets">
                 <button type="button" class="btn-balance-preset" onclick="adjustBalancePreset(10000)">+10 000 ₽</button>
                 <button type="button" class="btn-balance-preset" onclick="adjustBalancePreset(50000)">+50 000 ₽</button>
@@ -761,7 +761,7 @@
 
           <div class="form-group" style="margin-top: 14px;">
             <label for="history-entry-amount">Итого за месяц (₽)</label>
-            <input type="number" id="history-entry-amount" placeholder="Например: 3500" min="0" step="1" required>
+            <input type="number" id="history-entry-amount" placeholder="Например: 3500" min="0" step="any" required>
           </div>
 
           <div style="display: flex; gap: 12px; margin-top: 24px;">
@@ -773,6 +773,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=19"></script>
+  <script src="app.js?v=20"></script>
 </body>
 </html>

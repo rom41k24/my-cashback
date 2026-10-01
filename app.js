@@ -3417,7 +3417,7 @@ function addHistoryBankRow(bankName = '', bankAmount = '') {
 
   row.innerHTML = `
     <input type="text" class="history-bank-name" placeholder="Название банка (Т-Банк, Альфа, МТС...)" value="${bankName}" style="flex: 2; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 13px; outline: none;">
-    <input type="number" class="history-bank-amount" placeholder="Сумма ₽" value="${bankAmount}" min="0" step="1" style="flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 13px; outline: none;">
+    <input type="number" class="history-bank-amount" placeholder="Сумма ₽" value="${bankAmount}" min="0" step="any" style="flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: var(--text-primary); font-size: 13px; outline: none;">
     <button type="button" class="btn-icon btn-remove-bank-row" title="Удалить строку" style="width: 32px; height: 32px; flex-shrink: 0; color: var(--text-secondary); border-radius: 8px; border: 1px solid var(--border-color); background: transparent;">&times;</button>
   `;
 
